@@ -1,0 +1,12 @@
+// api_use_item()
+// uses up a given amount of the item specified from open menus + inventory
+function sc_mod_api_use_item(item, amount) {
+  sc_util_use_item(item, amount);
+}
+
+
+// api_use_total()
+// gets the amount of usable item in open menus + inventory
+function sc_mod_api_use_total(item) {
+  return sc_util_total(item, true);
+}
