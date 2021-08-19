@@ -39,10 +39,10 @@ function sc_mod_api_create_effect(px, py, ptype, amount, col) {
                                
 // api_create_item()
 // create an item at the position given
-function sc_mod_api_create_item(item, count, ix, iy) {
+function sc_mod_api_create_item(item, count, ix, iy, stats) {
   var mod_name = global.MOD_STATE_IDS[? lua_current];
   try {
-    var def = sc_util_create_item_data(item, count, {});
+    var def = sc_util_create_item_data(item, count, stats == undefined ? {} : stats);
     var inst = sc_util_spawn_at(def.item, def.total, def.durability, def.durability, def.stats, ix, iy);
     return inst.id;
   } catch(ex) {
@@ -76,7 +76,7 @@ function sc_mod_api_create_object_pls(oid, ix, iy) {
       return undefined;
     }
   } catch(ex) {
-    sc_mod_log(mod_name, "api_create_item", "Error: Failed To Create Object", ex.longMessage);  
+    sc_mod_log(mod_name, "api_create_object", "Error: Failed To Create Object", ex.longMessage);  
     return undefined;
   }
 }
@@ -98,4 +98,11 @@ function sc_mod_api_create_timer(func, seconds, arg1, arg2, arg3) {
   } catch(ex) {
     sc_mod_log(mod_name, "api_create_timer", "Error: Failed To Create Timer", ex.longMessage);
   }
+}
+
+
+// api_create_bee_stats()
+// creates a set of stats for a given bee
+function sc_mod_api_create_bee_stats(species, queen) {
+  return sc_bee_create_drone(species, queen);
 }
