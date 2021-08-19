@@ -268,3 +268,17 @@ function sc_mod_api_set_menu_position(menu_id, mx, my) {
     return undefined;  
   }
 }
+
+
+// api_set_tooltip()
+// changes the tooltip for a given oid
+function sc_mod_api_set_tooltip(oid, tooltip) {
+  var mod_name = global.MOD_STATE_IDS[? lua_current];
+	if (global.DICTIONARY[? oid] != undefined) {
+		global.DICTIONARY[? oid][? "tooltip"] = tooltip;	
+		return "Success";
+	} else {
+    sc_mod_log(mod_name, "api_set_tooltip", "Error: Definition For OID Doesn't Exist", undefined);
+    return undefined;  
+	}
+}
