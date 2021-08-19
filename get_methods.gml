@@ -238,37 +238,45 @@ function sc_mod_api_get_inst(inst_id) {
 
 // api_get_objects()
 // get all nearby generic obj instances
-function sc_mod_api_get_objects(radius) {
+function sc_mod_api_get_objects(radius, oid, coordinate) {
   var data = [];
   if (radius != undefined) {
     var nearby = ds_list_create();
-    collision_circle_list(global.PLAYER.x, global.PLAYER.y+8, radius, ob_generic, false, false, nearby, false);
+    var px = coordinate == undefined ? global.PLAYER.x : coordinate.x;
+    var py = coordinate == undefined ? global.PLAYER.y+8 : coordinate.y;
+    collision_circle_list(px, py, radius, ob_generic, false, false, nearby, false);
     for (var n = 0; n < ds_list_size(nearby); n++) {
       var near = nearby[| n];
-      array_push(data, {
-        id: near.id,
-        sprite_index: near.sprite_index,
-        image_index: near.image_index,
-        menu_id: undefined,
-        oid: near.oid,
-        x: near.x,
-        y: near.y,
-        slots: undefined
-      });
+      var check = oid != undefined ? near.oid == oid : true;
+      if (check == true) {
+        array_push(data, {
+          id: near.id,
+          sprite_index: near.sprite_index,
+          image_index: near.image_index,
+          menu_id: undefined,
+          oid: near.oid,
+          x: near.x,
+          y: near.y,
+          slots: undefined
+        });
+      }
     }
     ds_list_destroy(nearby);
   } else {
     with (ob_generic) { 
-      array_push(data, {
-        id: self.id,
-        sprite_index: self.sprite_index,
-        image_index: self.image_index,
-        menu_id: undefined,
-        oid: self.oid,
-        x: self.x,
-        y: self.y,
-        slots: undefined
-      });
+      var check = oid != undefined ? self.oid == oid : true;
+      if (check == true) {
+        array_push(data, {
+          id: self.id,
+          sprite_index: self.sprite_index,
+          image_index: self.image_index,
+          menu_id: undefined,
+          oid: self.oid,
+          x: self.x,
+          y: self.y,
+          slots: undefined
+        });
+      }
     }
   }
   return data;
@@ -277,61 +285,47 @@ function sc_mod_api_get_objects(radius) {
 
 // api_get_menu_objects()
 // get all nearby or working menu object instances
-function sc_mod_api_get_menu_objects(radius) {
+function sc_mod_api_get_menu_objects(radius, oid, coordinate) {
   var data = [];
   if (radius != undefined) {
     var nearby = ds_list_create();
-    collision_circle_list(global.PLAYER.x, global.PLAYER.y+8, radius, ob_menu_object, false, false, nearby, false);
+    var px = coordinate == undefined ? global.PLAYER.x : coordinate.x;
+    var py = coordinate == undefined ? global.PLAYER.y+8 : coordinate.y;
+    collision_circle_list(px, py, radius, ob_menu_object, false, false, nearby, false);
     for (var n = 0; n < ds_list_size(nearby); n++) {
       var near = nearby[| n];
-      var slots = [];
-      for (var s = 0; s < ds_list_size(near.slots); s++) {
-        array_push(slots, {
-          id: slot.id,
-          index: slot.index+1,
-          item: slot.item,
-          count: slot.count,
-          current_health: slot.current_health,
-          total_health: slot.total_health,
-          stats: slot.stats
-        });
+      var menu = near.menu;
+      var check = oid != undefined ? near.oid == oid : true;
+      if (check == true && menu != "") {
+        array_push(data, {
+          id: near.id,
+          sprite_index: near.sprite_index,
+          image_index: near.image_index,
+          menu_id: undefined,
+          oid: near.oid,
+          x: near.x,
+          y: near.y,
+          slots: sc_mod_api_get_slots(near.id)
+        });  
       }
-      array_push(data, {
-        id: near.id,
-        sprite_index: near.sprite_index,
-        image_index: near.image_index,
-        menu_id: undefined,
-        oid: near.oid,
-        x: near.x,
-        y: near.y,
-        slots: slots
-      });  
     }
     ds_list_destroy(nearby);
   } else {
     with (ob_menu_object) {
-      var slots = [];
-      for (var s = 0; s < ds_list_size(self.slots); s++) {
-        array_push(slots, {
-          id: slot.id,
-          index: slot.index+1,
-          item: slot.item,
-          count: slot.count,
-          current_health: slot.current_health,
-          total_health: slot.total_health,
-          stats: slot.stats
-        });
+      var menu = self.menu;
+      var check = oid != undefined ? self.oid == oid : true;
+      if (check == true && menu != "") {
+        array_push(data, {
+          id: self.id,
+          sprite_index: self.sprite_index,
+          image_index: self.image_index,
+          menu_id: undefined,
+          oid: self.oid,
+          x: self.x,
+          y: self.y,
+          slots: sc_mod_api_get_slots(self.id)
+        });  
       }
-      array_push(data, {
-        id: self.id,
-        sprite_index: self.sprite_index,
-        image_index: self.image_index,
-        menu_id: undefined,
-        oid: self.oid,
-        x: self.x,
-        y: self.y,
-        slots: slots
-      });  
     }
   }
   return data;
@@ -505,4 +499,131 @@ function sc_mod_api_get_boundary(inst_id) {
 // get uuid for current game
 function sc_mod_api_get_filename() {
   return global._FILE_LOADED;  
+}
+
+
+// api_get_menus_obj()
+// gets the menu object for a given menu inst id
+function sc_mod_api_get_menus_obj(menu_id) {
+  var mod_name = global.MOD_STATE_IDS[? lua_current];
+  if (menu_id != undefined && instance_exists(menu_id) && menu_id.object_index == ob_menu) {
+    return menu_id.obj;
+  } else {
+    sc_mod_log(mod_name, "api_get_menus_obj", "Error: Invalid Menu Instance ID", undefined);
+    return undefined;
+  }
+}
+
+
+// api_get_objs_menu()
+// gets the menu for a given menu object inst id
+function sc_mod_api_get_objs_menu(obj_id) {
+  var mod_name = global.MOD_STATE_IDS[? lua_current];
+  if (obj_id != undefined && instance_exists(obj_id) && obj_id.object_index == ob_menu_object) {
+    return obj_id.menu;
+  } else {
+    sc_mod_log(mod_name, "api_get_objs_menu", "Error: Invalid Menu Instance ID", undefined);
+    return undefined;
+  }
+}
+
+
+
+// api_get_game_size()
+// gets the current game window size (taking into account the scale)
+function sc_mod_api_get_game_size() {
+  return {
+    width: global.GAME_WIDTH,
+    height: global.GAME_HEIGHT
+  }
+}
+
+
+// api_get_inst_in_rectangle()
+// gets all instance of the given class within a given rectangle
+function sc_mod_api_get_inst_in_rectangle(instance_type, x1, y1, x2, y2) {
+  var mod_name = global.MOD_STATE_IDS[? lua_current];
+  
+  // get class name
+  var cls = undefined;
+  switch(instance_type) {
+    case "item": cls = ob_item; break;
+    case "obj": cls = ob_generic; break;
+    case "menu_obj": cls = ob_menu_object; break;
+    case "tree": cls = ob_tree; break;
+    case "flower": cls = ob_flower; break;
+  }
+  
+  // check valid class
+  if (cls == undefined) {
+    sc_mod_log(mod_name, "api_get_inst_in_rectangle", "Error: Invalid Instance Type", undefined);
+    return [];
+  } else {
+  
+    // return instances in the given rectangle
+    var insts = ds_list_create();
+    collision_rectangle_list(x1, y1, x2, y2, cls, false, false, insts, false);
+    var arr = [];
+    for (var i = 0; i < ds_list_size(insts); i++) {
+      var inst_id = insts[| i];
+      array_push({
+        id: inst_id.id,
+        sprite_index: inst_id.sprite_index,
+        image_index: inst_id.image_index,
+        menu_id: cls == ob_menu_object ? inst_id.menu : undefined,
+        oid: variable_instance_exists(inst_id, "oid") ? inst_id.oid : undefined,
+        x: inst_id.x,
+        y: inst_id.y,
+        slots: cls == ob_menu_object ? sc_mod_api_get_slots(inst_id) : undefined
+      });
+    }
+    ds_list_destroy(insts);
+    return arr;
+    
+  }
+}
+
+
+// api_get_inst_in_circle()
+// gets all instance of the given class within a given rectangle
+function sc_mod_api_get_inst_in_circle(instance_type, x1, y1, rad) {
+  var mod_name = global.MOD_STATE_IDS[? lua_current];
+  
+  // get class name
+  var cls = undefined;
+  switch(instance_type) {
+    case "item": cls = ob_item; break;
+    case "obj": cls = ob_generic; break;
+    case "menu_obj": cls = ob_menu_object; break;
+    case "tree": cls = ob_tree; break;
+    case "flower": cls = ob_flower; break;
+  }
+  
+  // check valid class
+  if (cls == undefined) {
+    sc_mod_log(mod_name, "api_get_inst_in_circle", "Error: Invalid Instance Type", undefined);
+    return [];
+  } else {
+  
+    // return instances in the given rectangle
+    var insts = ds_list_create();
+    collision_circle_list(x1, y1, rad, cls, false, false, insts, false);
+    var arr = [];
+    for (var i = 0; i < ds_list_size(insts); i++) {
+      var inst_id = insts[| i];
+      array_push({
+        id: inst_id.id,
+        sprite_index: inst_id.sprite_index,
+        image_index: inst_id.image_index,
+        menu_id: cls == ob_menu_object ? inst_id.menu : undefined,
+        oid: variable_instance_exists(inst_id, "oid") ? inst_id.oid : undefined,
+        x: inst_id.x,
+        y: inst_id.y,
+        slots: cls == ob_menu_object ? sc_mod_api_get_slots(inst_id) : undefined
+      });
+    }
+    ds_list_destroy(insts);
+    return arr;
+    
+  }
 }
