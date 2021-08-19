@@ -172,7 +172,7 @@ function sc_mod_api_define_recipe(tab, item, recipe, total) {
 
 // api_define_object()
 // defines a new object and adds it to the dictionary
-function sc_mod_api_define_object(obj, sprite_image, special, draw_script) {
+function sc_mod_api_define_object(obj, sprite_image, draw_script, special) {
   
   var mod_name = global.MOD_STATE_IDS[? lua_current];
   
@@ -242,8 +242,8 @@ function sc_mod_api_define_object(obj, sprite_image, special, draw_script) {
     
     // add custom draw script if any
     if (draw_script != undefined) {
-      obj.state = lua_current;
-      obj.script_draw = draw_script;
+      global.MOD_OBJ_STATES[? obj_id] = lua_current;
+      global.MOD_OBJ_SCRIPTS[? obj_id] = draw_script;
     }    
     
     try {
@@ -1145,5 +1145,224 @@ function sc_mod_api_define_flower_recipe(species_a, species_b, species_s) {
     sc_mod_log(mod_name, "api_define_bee_recipe", "Error: Species Given Are Not Defined", undefined);
     return undefined;
   }
+  
+}
+
+
+// api_define_npc()
+// define a new npc along with dialogue and shop stock
+function sc_mod_api_define_npc(npc, standing_sprite, standing_sprite_h, walking_sprite, walking_sprite_h, head_sprite, bust_sprite, item_sprite, dialogue_menu_sprite, shop_menu_sprite) {
+  var mod_name = global.MOD_STATE_IDS[? lua_current];
+  
+  try {
+  
+    // required
+    var req = ["id", "name", "pronouns", "tooltip", "stock", "greeting", "dialogue", "specials"];
+    for (var r = 0; r < array_length(req); r++) {
+      if (!variable_struct_exists(npc, req[r])) {
+        sc_mod_log(mod_name, "api_define_menu_npc", "Error: Missing Required Key (" + req[r] + ")", undefined);
+        return undefined;
+      }
+    }
+    
+    // valid npc id
+    var num = false;
+    try {
+      real(npc.id);
+      num = true;
+    } catch(ex) {
+      num = false;
+    }
+    if (num == false) {
+      sc_mod_log(mod_name, "api_define_menu_npc", "Error: NPC ID Must Be A Number", undefined);
+      return undefined;  
+    }
+    
+    var npc_id = "npc" + string(npc.id);
+    if (global.DICTIONARY[? npc_id] != undefined || global.MOD_NPCS[? npc_id] != undefined) {
+      sc_mod_log(mod_name, "api_define_menu_npc", "Error: NPC With This ID Already Defined", undefined);
+      return undefined;  
+    }
+    
+    // need 3 speciasl
+    if (array_length(npc.specials) < 3) {
+      sc_mod_log(mod_name, "api_define_menu_npc", "Error: Need To Specify At Least 3 Specials", undefined);
+      return undefined;  
+    }
+    
+    // try making the objs we need
+    var nn = ds_map_create();
+    var ns = undefined;
+    
+    var has_shop = variable_struct_exists(npc, "shop") == true && npc.shop == true;
+    var has_walk = variable_struct_exists(npc, "walking") == true && npc.walking == true;
+    
+    // create npc definition
+    nn[? "name"] = npc.name;
+    nn[? "category"] = global.DICTIONARY[? "npc1"][? "category"];
+    nn[? "tooltip"] = npc.tooltip;
+    nn[? "tooltip_item"] = global.DICTIONARY[? "npc1"][? "tooltip_item"];
+    nn[? "menu"] = true;
+    nn[? "layout"] = ds_list_create();
+    nn[? "buttons"] = ds_list_create();
+    nn[? "info"] = ds_list_create();
+    nn[? "tools"] = ds_list_create();
+    ds_list_add(nn[? "tools"], "mouse1");
+    ds_list_add(nn[? "tools"], "hammer1");
+    nn[? "machines"] = ds_list_create();
+    nn[? "placeable"] = true;
+    nn[? "singular"] = true;
+    if (variable_struct_exists(npc, "shop")) nn[? "shop"] = npc.shop;
+    if (variable_struct_exists(npc, "walking")) nn[? "walking"] = npc.walking;
+    nn[? "cost"] = global.DICTIONARY[? "npc1"][? "cost"];
+    nn[? "obj"] = npc_id;
+    
+    // create shop definition
+    if (has_shop) {
+      ns = ds_map_create();
+      ns[? "name"] = npc.name;
+      ns[? "category"] = global.DICTIONARY[? "npc1"][? "category"];
+      ns[? "tooltip"] = npc.tooltip;
+      ns[? "tooltip_item"] = global.DICTIONARY[? "npc1"][? "tooltip_item"];
+      ns[? "menu"] = true;
+      ns[? "layout"] = ds_list_create();
+      var lay = [
+        [76, 22, "Buy"], [7, 63, "Buy"], [30, 63, "Buy"], [53, 63, "Buy"], [76, 63, "Buy"], [99, 63, "Buy"],
+        [7, 86, "Buy"], [30, 86, "Buy"], [53, 86, "Buy"], [76, 86, "Buy"], [99, 86, "Buy"],
+        [7, 112, "Sell"], [30, 112, "Sell"], [53, 112, "Sell"], [76, 112, "Sell"], [99, 112, "Sell"], 
+        [7, 135, "Sell"], [30, 135, "Sell"], [53, 135, "Sell"], [76, 135, "Sell"], [99, 135, "Sell"],
+        [7, 158, "Sell"], [30, 158, "Sell"], [53, 158, "Sell"], [76, 158, "Sell"], [99, 158, "Sell"]
+      ];
+      for (var l = 0; l < array_length(lay); l++) {
+        var row = ds_list_create();
+        for (r = 0; r < array_length(lay[l]); r++) {
+          ds_list_add(row, lay[l][r]);  
+        }
+        ds_list_add(ns[? "layout"], row);
+      }
+      ns[? "buttons"] = ds_list_create();
+      ds_list_add(ns[? "buttons"], "Help");
+      ds_list_add(ns[? "buttons"], "Move");
+      ds_list_add(ns[? "buttons"], "Target");
+      ds_list_add(ns[? "buttons"], "Close");
+      ns[? "info"] = ds_list_create();
+      var row1 = ds_list_create();
+      ds_list_add(row1, "1. Item of the Day");
+      ds_list_add(row1, "GREEN");
+      var row2 = ds_list_create();
+      ds_list_add(row2, "2. Items for Sale");
+      ds_list_add(row2, "BLUE");
+      var row3 = ds_list_create();
+      ds_list_add(row3, "3. Items to Sell");
+      ds_list_add(row3, "RED");
+      ds_list_add(ns[? "info"], row1);
+      ds_list_add(ns[? "info"], row2);
+      ds_list_add(ns[? "info"], row3);
+      
+      ns[? "tools"] = ds_list_create();
+      ds_list_add(ns[? "tools"], "mouse1");
+      ds_list_add(ns[? "tools"], "hammer1");
+      ns[? "machines"] = ds_list_create();
+      ns[? "placeable"] = true;
+      ns[? "singular"] = true;
+      ns[? "shop"] = true;
+      ns[? "cost"] = global.DICTIONARY[? "npc1"][? "cost"];
+      ns[? "obj"] = npc_id;
+    }
+    
+    // add dialogue lines
+    var dialogue = [];
+    for (var d = 0; d < array_length(npc.dialogue); d++) {
+      var line = {
+        text: npc.dialogue[d],
+        action: d == array_length(npc.dialogue) - 1 ? "$action20" : "$action01"
+      }
+      array_push(dialogue, line);
+    }
+    
+    // shop menu
+    var spr1 = 1;
+    if (has_shop == true) {
+      spr1 = sprite_add(working_directory + "mods/" + mod_name + "/" + shop_menu_sprite, 4, true, false, 0, 0);
+      global.MOD_SPRITES[? "sp_" + npc_id + "s_menu"] = spr1;
+      global.SPRITE_REFERENCE[? "sp_" + npc_id + "s_menu"] = spr1;
+    }
+    
+    // dialogue menu
+    var spr2 = sprite_add(working_directory + "mods/" + mod_name + "/" + dialogue_menu_sprite, 2, true, false, 0, 0);
+    global.MOD_SPRITES[? "sp_" + npc_id + "_menu"] = spr2;
+    global.SPRITE_REFERENCE[? "sp_" + npc_id + "_menu"] = spr2;
+    
+    // item sprite
+    var spr3 = sprite_add(working_directory + "mods/" + mod_name + "/" + item_sprite, 2, true, false, 0, 0);
+    global.MOD_SPRITES[? "sp_" + npc_id] = spr3;
+    global.SPRITE_REFERENCE[? "sp_" + npc_id] = spr3;
+    
+    // bust sprite
+    var spr4 = sprite_add(working_directory + "mods/" + mod_name + "/" + bust_sprite, 2, true, false, 0, 0);
+    global.MOD_SPRITES[? "sp_" + npc_id + "_bust"] = spr4;
+    global.SPRITE_REFERENCE[? "sp_" + npc_id + "_bust"] = spr4;
+    
+    // standing
+    var spr5 = sprite_add(working_directory + "mods/" + mod_name + "/" + standing_sprite, 2, true, false, 0, 0);
+    global.MOD_SPRITES[? "sp_" + npc_id + "_standing"] = spr5;
+    global.SPRITE_REFERENCE[? "sp_" + npc_id + "_standing"] = spr5;
+    var spr6 = sprite_add(working_directory + "mods/" + mod_name + "/" + standing_sprite_h, 2, true, false, 0, 0);
+    global.MOD_SPRITES[? "sp_" + npc_id + "_standing_h"] = spr6;
+    global.SPRITE_REFERENCE[? "sp_" + npc_id + "_standing_h"] = spr6;
+    
+    // walking
+    var spr7 = 1;
+    var spr8 = 1;
+    if (has_walk == true) {
+      spr7 = sprite_add(working_directory + "mods/" + mod_name + "/" + walking_sprite, 4, true, false, 0, 0);
+      global.MOD_SPRITES[? "sp_" + npc_id + "_walking"] = spr7;
+      global.SPRITE_REFERENCE[? "sp_" + npc_id + "_walking"] = spr7;
+      spr8 = sprite_add(working_directory + "mods/" + mod_name + "/" + walking_sprite_h, 4, true, false, 0, 0);
+      global.MOD_SPRITES[? "sp_" + npc_id + "_walking_h"] = spr8;
+      global.SPRITE_REFERENCE[? "sp_" + npc_id + "_walking_h"] = spr8;
+    }
+    
+    var spr9 = sprite_add(working_directory + "mods/" + mod_name + "/" + head_sprite, 1, true, false, 0, 0);
+    global.MOD_SPRITES[? "sp_" + npc_id + "_head"] = spr9;
+    global.SPRITE_REFERENCE[? "sp_" + npc_id + "_head"] = spr9;
+    
+    if (spr1 != -1 && spr2 != -1 && spr3 != -1 && spr4 != -1 && spr5 != -1 && spr6 != -1 && spr7 != -1 && spr8 != -1 && spr9 != 1) {
+
+      // offset sprites
+      sprite_set_offset(spr5, 8, 0);
+      sprite_set_offset(spr6, 8, 0);
+      sprite_set_offset(spr7, 8, 0);
+      sprite_set_offset(spr8, 8, 0);
+      
+      // change sprite speed
+      sprite_set_speed(spr5, 2, spritespeed_framespersecond);
+      sprite_set_speed(spr6, 2, spritespeed_framespersecond);
+      sprite_set_speed(spr7, 2, spritespeed_framespersecond);
+      sprite_set_speed(spr8, 2, spritespeed_framespersecond);
+
+      // add definitions
+      global.DICTIONARY[? npc_id] = nn;
+      if (has_shop == true) global.DICTIONARY[? npc_id + "s"] = ns;
+      global.MOD_NPCS[? npc_id] = {
+        name: npc.name,
+        shop: variable_struct_exists(npc, "shop") && npc.shop == true,
+        pronouns: npc.pronouns,
+        stock: npc.stock,
+        specials: npc.specials,
+        dialogue: dialogue,
+        greeting: npc.greeting
+      }
+      
+    } else {
+      sc_mod_log(mod_name, "api_define_menu_npc", "Error: Failed To Load Sprite/s", undefined);
+      return undefined;
+    }
+    
+  } catch(ex) {
+    sc_mod_log(mod_name, "api_define_menu_npc", "Error: Failed To Define NPC", ex.longMessage);
+    return undefined;
+  }
+  
   
 }
