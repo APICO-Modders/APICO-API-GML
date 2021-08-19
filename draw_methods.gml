@@ -33,25 +33,43 @@ function sc_mod_api_draw_text(tx, ty, text, card, col, tw) {
 
 // api_draw_line()
 // draws a line primitive between 2 points
-function sc_mod_api_draw_line(x1, y1, x2, y2, col) {
+function sc_mod_api_draw_line(x1, y1, x2, y2, col, alpha) {
   var c = global.COLORS[? col] == undefined ? c_white : global.COLORS[? col];
-  draw_line_color(x1, y1, x2, y2, c, c);
+  if (alpha == undefined) {
+    draw_line_color(x1, y1, x2, y2, c, c);
+  } else {
+    draw_set_alpha(alpha);
+    draw_line_color(x1, y1, x2, y2, c, c);
+    draw_set_alpha(1);
+  }
 }
 
 
 // api_draw_rectangle()
 // draws a rectangle at a given position
-function sc_mod_api_draw_rectangle(x1, y1, x2, y2, col, outline) {
+function sc_mod_api_draw_rectangle(x1, y1, x2, y2, col, outline, alpha) {
   var c = global.COLORS[? col] == undefined ? c_white : global.COLORS[? col];
-  draw_rectangle_color(x1, y1, x2, y2, c, c, c, c, outline);
+  if (alpha == undefined) { 
+    draw_rectangle_color(x1, y1, x2, y2, c, c, c, c, outline);
+  } else {
+    draw_set_alpha(alpha);
+    draw_rectangle_color(x1, y1, x2, y2, c, c, c, c, outline);
+    draw_set_alpha(1);
+  }
 }
 
 
 // api_draw_circle()
 // draws a circle at a given position
-function sc_mod_api_draw_circle(cx, cy, rad, col, outline) {
+function sc_mod_api_draw_circle(cx, cy, rad, col, outline, alpha) {
   var c = global.COLORS[? col] == undefined ? c_white : global.COLORS[? col];
-  draw_circle_color(cx, cy, rad, c, c, outline);
+  if (alpha == undefined) { 
+    draw_circle_color(cx, cy, rad, c, c, outline);
+  } else {
+    draw_set_alpha(alpha);
+    draw_circle_color(cx, cy, rad, c, c, outline);
+    draw_set_alpha(1);
+  }
 }
 
 
