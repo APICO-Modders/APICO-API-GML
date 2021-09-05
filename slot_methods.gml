@@ -212,3 +212,31 @@ function sc_mod_api_slot_drain(menu_id, slot_index) {
     return undefined;
   }
 }
+
+
+// api_slot_set_inactive
+// set a slot to be inactive, making it unable to be highlighted or clicked
+function sc_mod_api_slot_set_inactive(slot_id, inactive) {
+  var mod_name = global.MOD_STATE_IDS[? lua_current];
+	if (slot_id != undefined && instance_exists(slot_id)) {
+		slot_id.inactive = inactive;	
+		return "Success";
+	} else {
+    sc_mod_log(mod_name, "api_slot_set_inactive", "Error: Slot Instance Doesn't Exist", undefined);
+    return undefined;
+	}
+}
+
+
+// api_slot_set_modded
+// set a slot to be modded, making it able to be highlighted but cant be clicked
+function sc_mod_api_slot_set_modded(slot_id, modded) {
+  var mod_name = global.MOD_STATE_IDS[? lua_current];
+	if (slot_id != undefined && instance_exists(slot_id)) {
+		slot_id.modded = modded;
+		return "Success";
+	} else {
+    sc_mod_log(mod_name, "api_slot_set_modded", "Error: Slot Instance Doesn't Exist", undefined);
+    return undefined;
+	}
+}
