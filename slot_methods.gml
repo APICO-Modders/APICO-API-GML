@@ -54,11 +54,11 @@ function sc_mod_api_slot_decr(slot_id, amount) {
 
 // api_slot_set()
 // set a given slot with a given item
-function sc_mod_api_slot_set(slot_id, item, amount) {
+function sc_mod_api_slot_set(slot_id, item, amount, stats) {
   var mod_name = global.MOD_STATE_IDS[? lua_current];
   try {
     if (slot_id != undefined && instance_exists(slot_id)) {
-      var data = sc_util_create_item_data(item, amount, {});
+      var data = sc_util_create_item_data(item, amount, stats == undefined ? {} : stats);
       sc_slot_set(slot_id, data.item, data.total, data.durability, data.durability, data.stats);
       return "Success";
     }
@@ -208,7 +208,7 @@ function sc_mod_api_slot_drain(menu_id, slot_index) {
     sc_menu_drain(menu_id, slot_index-1, 1);
     return "Success"
   } else {
-    sc_mod_log(mod_name, "api_slot_fill", "Error: Menu Instance Doesn't Exist", undefined);
+    sc_mod_log(mod_name, "api_slot_drain", "Error: Menu Instance Doesn't Exist", undefined);
     return undefined;
   }
 }
@@ -218,13 +218,13 @@ function sc_mod_api_slot_drain(menu_id, slot_index) {
 // set a slot to be inactive, making it unable to be highlighted or clicked
 function sc_mod_api_slot_set_inactive(slot_id, inactive) {
   var mod_name = global.MOD_STATE_IDS[? lua_current];
-	if (slot_id != undefined && instance_exists(slot_id)) {
-		slot_id.inactive = inactive;	
-		return "Success";
-	} else {
+  if (slot_id != undefined && instance_exists(slot_id)) {
+    slot_id.inactive = inactive;  
+    return "Success";
+  } else {
     sc_mod_log(mod_name, "api_slot_set_inactive", "Error: Slot Instance Doesn't Exist", undefined);
     return undefined;
-	}
+  }
 }
 
 
@@ -232,11 +232,11 @@ function sc_mod_api_slot_set_inactive(slot_id, inactive) {
 // set a slot to be modded, making it able to be highlighted but cant be clicked
 function sc_mod_api_slot_set_modded(slot_id, modded) {
   var mod_name = global.MOD_STATE_IDS[? lua_current];
-	if (slot_id != undefined && instance_exists(slot_id)) {
-		slot_id.modded = modded;
-		return "Success";
-	} else {
+  if (slot_id != undefined && instance_exists(slot_id)) {
+    slot_id.modded = modded;
+    return "Success";
+  } else {
     sc_mod_log(mod_name, "api_slot_set_modded", "Error: Slot Instance Doesn't Exist", undefined);
     return undefined;
-	}
+  }
 }
