@@ -34,9 +34,10 @@ function sc_mod_api_define_item(item, sprite_image, special) {
     def[? "name"] = item.name;
     def[? "category"] = item.category;
     def[? "tooltip"] = item.tooltip;
-    def[? "shop_key"] = item.shop_key;
-    def[? "shop_buy"] = item.shop_buy;
-    def[? "shop_sell"] = item.shop_sell;
+    def[? "cost"] = ds_map_create();
+    def[? "cost"][? "key"] = item.shop_key;
+    def[? "cost"][? "buy"] = item.shop_buy;
+    def[? "cost"][? "sell"] = item.shop_sell;
     def[? "machines"] = ds_list_create();  
     if (variable_struct_exists(item, "machines")) {
       for (var a = 0; a < array_length(item.machines); a++) {
@@ -129,6 +130,42 @@ function sc_mod_api_define_sprite(sprite_name, sprite_image, frames) {
 }
 
 
+// api_define_gif()
+// define a new gif and add to the sprite reference, returning the ID
+function sc_mod_api_define_gif(gif_name, gif_image, frames) {
+  var mod_name = global.MOD_STATE_IDS[? lua_current];
+  try {
+    
+    // try loading the sprite given
+    var path = working_directory + "mods/" + mod_name + "/" + gif_image;
+    var spr = sprite_add(path, frames, true, false, 0, 0);
+    if (spr == -1) {
+      sc_mod_log(mod_name, "api_define_gif", "Error: Failed To Find Path (" + path + ")", undefined);  
+      return undefined;
+    } else {
+      
+      // add to references
+      var spr_name = "gif_" + gif_name;
+      if (global.MOD_SPRITES[? spr_name] == undefined && global.SPRITE_REFERENCE[? spr_name] == undefined) {
+        global.MOD_SPRITES[? spr_name] = spr;
+        global.SPRITE_REFERENCE[? spr_name] = spr;
+        log("added", spr_name);
+        sc_mod_log(mod_name, "api_define_gif", "GIF Defined (" + spr_name + ")", undefined);  
+        return spr;
+      } else {
+        sc_mod_log(mod_name, "api_define_gif", "Error: GIF Name Already Exists", undefined);  
+        return undefined;
+      }
+    }
+    
+  // not sure why it might be called but hey ho
+  } catch(ex) {
+    sc_mod_log(mod_name, "api_define_gif", "Error: Failed To Define GIF", ex.longMessage);  
+    return undefined;
+  }
+}
+
+
 // api_define_recipe()
 // define a new recipe for the workbench
 function sc_mod_api_define_recipe(tab, item, recipe, total) {
@@ -202,9 +239,10 @@ function sc_mod_api_define_object(obj, sprite_image, draw_script, special) {
     def[? "name"] = obj.name;
     def[? "category"] = obj.category;
     def[? "tooltip"] = obj.tooltip;
-    def[? "shop_key"] = obj.shop_key;
-    def[? "shop_buy"] = obj.shop_buy;
-    def[? "shop_sell"] = obj.shop_sell;
+    def[? "cost"] = ds_map_create();
+    def[? "cost"][? "key"] = obj.shop_key;
+    def[? "cost"][? "buy"] = obj.shop_buy;
+    def[? "cost"][? "sell"] = obj.shop_sell;
     def[? "menu"] = false;
     def[? "machines"] = ds_list_create();  
     if (variable_struct_exists(obj, "machines")) {
@@ -328,10 +366,10 @@ function sc_mod_api_define_quest(quest, page1, page2) {
       for (var p = 0; p < array_length(page1); p++) {
         var line = page1[p];
         var l = ds_map_create();
-        l[? "color"] = variable_struct_exists(line, "color") ? line.color : "FONT_BOOK";
-        l[? "text"] = variable_struct_exists(line, "text") ? line.text : "\n";
+        if (!variable_struct_exists(line, "gif")) l[? "color"] = variable_struct_exists(line, "color") ? line.color : "FONT_BOOK";
+        if (!variable_struct_exists(line, "gif")) l[? "text"] = variable_struct_exists(line, "text") ? line.text : "\n";
         if (variable_struct_exists(line, "gif")) l[? "gif"] = line.gif;
-        if (variable_struct_exists(line, "height")) l[? "width"] = line.height;
+        if (variable_struct_exists(line, "height")) l[? "height"] = line.height;
         ds_list_add(nq[? "page1"], l);
       }
       
@@ -343,7 +381,7 @@ function sc_mod_api_define_quest(quest, page1, page2) {
         l[? "color"] = variable_struct_exists(line, "color") ? line.color : "FONT_BOOK";
         l[? "text"] = variable_struct_exists(line, "text") ? line.text : "\n";
         if (variable_struct_exists(line, "gif")) l[? "gif"] = line.gif;
-        if (variable_struct_exists(line, "height")) l[? "width"] = line.height;
+        if (variable_struct_exists(line, "height")) l[? "height"] = line.height;
         ds_list_add(nq[? "page2"], l);
       }
       
@@ -352,6 +390,8 @@ function sc_mod_api_define_quest(quest, page1, page2) {
       if (global.QUEST_REFERENCE[? quest.id] == undefined) {
         global.QUEST_REFERENCE[? quest.id] = nq;
       }
+      global.MOD_CUSTOM_QUESTS = true;
+      return "Success";
       
     }
   
@@ -396,9 +436,10 @@ function sc_mod_api_define_flower(flower, flower_sprite_image, flower_variants_i
       item_def.name = flower.species;
       item_def.category = global.DICTIONARY[? "flower1"][? "category"];
       item_def.tooltip = global.DICTIONARY[? "flower1"][? "tooltip"];
-      item_def.shop_key = false;
-      item_def.shop_buy = variable_struct_exists(flower, "shop_buy") ? flower.shop_buy : 0;
-      item_def.shop_sell = variable_struct_exists(flower, "shop_sell") ? flower.shop_sell : 0;
+      item_def[? "cost"] = ds_map_create();
+      item_def[? "cost"][? "key"] = false;
+      item_def[? "cost"][? "buy"] = variable_struct_exists(flower, "shop_buy") ? flower.shop_buy : 0;
+      item_def[? "cost"][? "sell"] = variable_struct_exists(flower, "shop_sell") ? flower.shop_sell : 0;
       item_def.machines = variable_struct_exists(flower, "machines") ? flower.machines : ["workbench", "pot1", "smoker"];
       item_def.tools = variable_struct_exists(flower, "tools") ? flower.tools : ["mouse1"];
       item_def.placeable = true;
@@ -418,9 +459,10 @@ function sc_mod_api_define_flower(flower, flower_sprite_image, flower_variants_i
       seed_def.name = flower.species + " Seeds";
       seed_def.category = global.DICTIONARY[? "seed1"][? "category"];
       seed_def.tooltip = global.DICTIONARY[? "seed1"][? "tooltip"];
-      seed_def.shop_key = false;
-      seed_def.shop_buy = 1;
-      seed_def.shop_sell = 0;
+      seed_def[? "cost"] = ds_map_create();
+      seed_def[? "cost"][? "key"] = false;
+      seed_def[? "cost"][? "buy"] = 1;
+      seed_def[? "cost"][? "sell"] = 0;
       seed_def.tools = [];
       seed_def.machines = [];
       seed_def.placeable = true;
@@ -512,6 +554,7 @@ function sc_mod_api_define_flower(flower, flower_sprite_image, flower_variants_i
         } else {
         
           // add to flower list
+          global.MOD_CUSTOM_FLOWERS = true;
           global.FLOWERS[? flower.id] = nf;
           global.COLORS[? string_upper(flower_id)] = make_color_rgb(flower_color[0], flower_color[1], flower_color[2]);
           ds_list_add(global.FLOWERS[? "_species"], flower.id);
@@ -534,7 +577,7 @@ function sc_mod_api_define_flower(flower, flower_sprite_image, flower_variants_i
 
 // api_define_bee()
 // defines a new bee and adds to the book
-function sc_mod_api_define_bee(bee, bee_sprite_image, bee_shiny_image, bee_hd_image, bee_color) {
+function sc_mod_api_define_bee(bee, bee_sprite_image, bee_shiny_image, bee_hd_image, bee_color, bee_mag_image, bee_mag_headline, bee_mag_body) {
   
   var mod_name = global.MOD_STATE_IDS[? lua_current];
   
@@ -652,14 +695,41 @@ function sc_mod_api_define_bee(bee, bee_sprite_image, bee_shiny_image, bee_hd_im
       global.MOD_SPRITES[? bn + "_hd"] = hspr;
       global.SPRITE_REFERENCE[? bn + "_hd"] = hspr;
       
+      // add bee magazine
+      var mspr = sprite_add(working_directory + "mods/" + mod_name + "/" + bee_mag_image, 2, true, false, 0, 0);
+      global.MOD_SPRITES[? "sp_magazine_" + bee.id] = mspr;
+      global.SPRITE_REFERENCE[? "sp_magazine_" + bee.id] = mspr;
+      
+      // add mag item
+      var mag_def = ds_map_create();
+      mag_def[? "name"] = string_replace(global.DICTIONARY[? "magazine_common"][? "name"], " 1", "") + " " + bee.bid;
+      mag_def[? "category"] = global.DICTIONARY[? "magazine_common"][? "category"];
+      mag_def[? "tooltip"] = global.DICTIONARY[? "magazine_uncommon"][? "tooltip"];
+      mag_def[? "cost"] = ds_map_create();
+      mag_def[? "cost"][? "key"] = true;
+      mag_def[? "cost"][? "buy"] = 0;
+      mag_def[? "cost"][? "sell"] = 0;
+      mag_def[? "tools"] = ds_list_create();
+      mag_def[? "machines"] = ds_list_create();
+      mag_def[? "placeable"] = false;
+      mag_def[? "singular"] = true;
+      
       // check sprites loaded
       if (spr == -1 || vspr == -1 || hspr == -1) {
         sc_mod_log(mod_name, "api_define_bee", "Error: Bee Sprites Not Found", undefined);
         return undefined;
       } else {
       
+        // add mag
+        ds_map_add(global.DIALOGUE[? "magazine"], bee.id, ds_list_create());
+        ds_list_add(global.DIALOGUE[? "magazine"][? bee.id], bee_mag_headline);
+        ds_list_add(global.DIALOGUE[? "magazine"][? bee.id], bee_mag_body);
+        global.DICTIONARY[? "magazine_" + bee.id] = mag_def;
+      
         // add references
+        global.MOD_CUSTOM_BEES = true;
         global.BEES[? bee.id] = nf;
+        global.MOD_BEES[? bee.id] = true;
         global.MOD_BIDS[? bee.bid] = bee.id;
         global.COLORS[? "BEE_" + string_upper(bee.id)] = make_color_rgb(bee_color.r, bee_color.g, bee_color.b);
         ds_list_add(global.BEES[? "_species"], bee.id);
@@ -724,9 +794,10 @@ function sc_mod_api_define_menu_object(obj, sprite_image, menu_image, scripts) {
     def[? "name"] = obj.name;
     def[? "category"] = obj.category;
     def[? "tooltip"] = obj.tooltip;
-    def[? "shop_key"] = obj.shop_key;
-    def[? "shop_buy"] = obj.shop_buy;
-    def[? "shop_sell"] = obj.shop_sell;
+    def[? "cost"] = ds_map_create();
+    def[? "cost"][? "key"] = obj.shop_key;
+    def[? "cost"][? "buy"] = obj.shop_buy;
+    def[? "cost"][? "sell"] = obj.shop_sell;
     def[? "menu"] = true;
     def[? "layout"] = ds_list_create();   // gotta love converting datatypes eh?
     if (variable_struct_exists(obj, "layout")) {
@@ -1214,7 +1285,10 @@ function sc_mod_api_define_npc(npc, standing_sprite, standing_sprite_h, walking_
     nn[? "singular"] = true;
     if (variable_struct_exists(npc, "shop")) nn[? "shop"] = npc.shop;
     if (variable_struct_exists(npc, "walking")) nn[? "walking"] = npc.walking;
-    nn[? "cost"] = global.DICTIONARY[? "npc1"][? "cost"];
+    nn[? "cost"] = ds_map_create();
+    nn[? "cost"][? "key"] = true;
+    nn[? "cost"][? "buy"] = 0;
+    nn[? "cost"][? "sell"] = 0;
     nn[? "obj"] = npc_id;
     
     // create shop definition
@@ -1266,7 +1340,10 @@ function sc_mod_api_define_npc(npc, standing_sprite, standing_sprite_h, walking_
       ns[? "placeable"] = true;
       ns[? "singular"] = true;
       ns[? "shop"] = true;
-      ns[? "cost"] = global.DICTIONARY[? "npc1"][? "cost"];
+      ns[? "cost"] = ds_map_create();
+      ns[? "cost"][? "key"] = true;
+      ns[? "cost"][? "buy"] = 0;
+      ns[? "cost"][? "sell"] = 0;
       ns[? "obj"] = npc_id;
     }
     
