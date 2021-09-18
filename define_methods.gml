@@ -679,7 +679,31 @@ function sc_mod_api_define_bee(bee, bee_sprite_image, bee_shiny_image, bee_hd_im
       }
       nf[? "chance"] = bee.chance;
       nf[? "requirement"] = bee.requirement;
-      nf[? "tier"] = 5;
+      
+      var insert_index = 0;
+      
+      // check tier preference and try our darn best
+      var tiers = sc_tier_count();
+      if (variable_struct_exists(bee, "tier")) {
+        var tier = bee.tier;
+        log("bee tiers", tiers);
+        if (tier == 1 && tiers.t1 >= 6) tier = 2;
+        if (tier == 2 && tiers.t2 >= 12) tier = 3;
+        if (tier == 3 && tiers.t3 >= 30) tier = 4;
+        if (tier == 4 && tiers.t4 >= 12) tier = 5;
+        switch(tier) {
+          case 1: insert_index = tiers.t1i; break;
+          case 2: insert_index = tiers.t2i; break;
+          case 3: insert_index = tiers.t3i; break;
+          case 4: insert_index = tiers.t4i; break;
+          case 5: insert_index = tiers.t5i - 1; break; // account for glitched
+        }
+        nf[? "tier"] = tier;
+      } else {
+        var insert_index = tiers.t5i - 1; // account for glitched
+        nf[? "tier"] = 5;
+      }
+      
       nf[? "bid"] = bee.bid;
       
       // set default progress vals
@@ -744,7 +768,13 @@ function sc_mod_api_define_bee(bee, bee_sprite_image, bee_shiny_image, bee_hd_im
 				global.MOD_BEES[? bee.id] = true;
         global.MOD_BIDS[? bee.bid] = bee.id;
         global.COLORS[? "BEE_" + string_upper(bee.id)] = make_color_rgb(bee_color.r, bee_color.g, bee_color.b);
-        ds_list_add(global.BEES[? "_species"], bee.id);
+        
+        if (insert_index == 0) {
+          ds_list_add(global.BEES[? "_species"], bee.id);
+        } else {
+          ds_list_insert(global.BEES[? "_species"], insert_index+1, bee.id); 
+        }
+        
         return "Success";
         
       }
