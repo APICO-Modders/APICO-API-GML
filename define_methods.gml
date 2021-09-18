@@ -278,6 +278,18 @@ function sc_mod_api_define_object(obj, sprite_image, draw_script, special) {
     if (variable_struct_exists(obj, "growth")) def[? "growth"] = obj.growth;
     if (variable_struct_exists(obj, "invisible")) def[? "invisible"] = obj.invisible;
     
+    if (variable_struct_exists(obj, "item_sprite")) {
+      var ispr = sprite_add(working_directory + "mods/" + mod_name + "/" + obj.item_sprite, 4, true, false, 0, 0);
+      if (ispr == -1) {
+        sc_mod_log(mod_name, "api_define_object", "Error: Object Sprite Not Found (item_sprite)", undefined);
+        return undefined;  
+      } else {
+        var ispr_name = "sp_" + obj_id + "_item";
+        global.MOD_SPRITES[? ispr_name] = ispr
+        global.SPRITE_REFERENCE[? ispr_name] = ispr;
+      }
+    }
+    
     // add custom draw script if any
     if (draw_script != undefined) {
       global.MOD_OBJ_STATES[? obj_id] = lua_current;
@@ -857,6 +869,24 @@ function sc_mod_api_define_menu_object(obj, sprite_image, menu_image, scripts) {
     if (variable_struct_exists(obj, "honeycore")) def[? "honeycore"] = obj.honeycore;
     if (variable_struct_exists(obj, "invisible")) def[? "invisible"] = obj.invisible;
     if (variable_struct_exists(obj, "center")) def[? "center"] = obj.center;
+    
+    if (variable_struct_exists(obj, "item_sprite")) {
+      var ispr = sprite_add(working_directory + "mods/" + mod_name + "/" + obj.item_sprite, 4, true, false, 0, 0);
+      if (ispr == -1) {
+        sc_mod_log(mod_name, "api_define_menu_object", "Error: Menu Object Sprite Not Found (item_sprite)", undefined);
+        return undefined;  
+      } else {
+        var ispr_name = "sp_" + obj_id + "_item";
+        global.MOD_SPRITES[? ispr_name] = ispr
+        global.SPRITE_REFERENCE[? ispr_name] = ispr;
+      }
+    }
+    
+    // add custom draw script if any
+    if (draw_script != undefined) {
+      global.MOD_OBJ_STATES[? obj_id] = lua_current;
+      global.MOD_OBJ_SCRIPTS[? obj_id] = draw_script;
+    }  
     
     
     try {
