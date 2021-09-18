@@ -49,8 +49,8 @@ function sc_mod_api_get_mouse_tile_position() {
 // get the current camera position / view offset
 function sc_mod_api_get_camera_position() {
   return {
-    x: global.CAMERA.x,
-    y: global.CAMERA.y
+    x: floor(global.CAMERA.x),
+    y: floor(global.CAMERA.y)
   }
 }
 
@@ -566,7 +566,7 @@ function sc_mod_api_get_inst_in_rectangle(instance_type, x1, y1, x2, y2) {
     var arr = [];
     for (var i = 0; i < ds_list_size(insts); i++) {
       var inst_id = insts[| i];
-      array_push({
+      array_push(arr, {
         id: inst_id.id,
         sprite_index: inst_id.sprite_index,
         image_index: inst_id.image_index,
@@ -611,7 +611,7 @@ function sc_mod_api_get_inst_in_circle(instance_type, x1, y1, rad) {
     var arr = [];
     for (var i = 0; i < ds_list_size(insts); i++) {
       var inst_id = insts[| i];
-      array_push({
+      array_push(arr, {
         id: inst_id.id,
         sprite_index: inst_id.sprite_index,
         image_index: inst_id.image_index,
