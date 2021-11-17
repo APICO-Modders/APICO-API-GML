@@ -59,7 +59,7 @@ function sc_mod_api_define_item(item, sprite_image, special) {
       global.DICTIONARY[? item_id] = def;
       var spr = sprite_add(working_directory + "mods/" + mod_name + "/" + sprite_image, 4, true, false, 0, 0);
       if (spr == -1) {
-        sc_mod_log(mod_name, "api_define_item", "Error: Item Sprite Not Found", ex.longMessage);
+        sc_mod_log(mod_name, "api_define_item", "Error: Item Sprite Not Found", "");
         return undefined;
       } else {
         var spr_name = "sp_" + item_id;
@@ -149,7 +149,6 @@ function sc_mod_api_define_gif(gif_name, gif_image, frames) {
       if (global.MOD_SPRITES[? spr_name] == undefined && global.SPRITE_REFERENCE[? spr_name] == undefined) {
         global.MOD_SPRITES[? spr_name] = spr;
         global.SPRITE_REFERENCE[? spr_name] = spr;
-        log("added", spr_name);
         sc_mod_log(mod_name, "api_define_gif", "GIF Defined (" + spr_name + ")", undefined);  
         return spr;
       } else {
@@ -192,9 +191,6 @@ function sc_mod_api_define_recipe(tab, item, recipe, total) {
     if (total > 1) map[? "total"] = total;
     if (global.RECIPES[? tab] != undefined) {
       ds_list_add(global.RECIPES[? tab], map);
-      for (var r = 0; r < ds_list_size(global.RECIPES[? tab]); r++) {
-        log(global.RECIPES[? tab][| r][? "item"]);  
-      }
       return "Success";
     } else {
       sc_mod_log(mod_name, "api_define_recipe", "Error: Invalid Recipe Tab Name (" + tab + ")", undefined);
@@ -399,6 +395,7 @@ function sc_mod_api_define_quest(quest, page1, page2) {
       
       // add to quests + quest ref 
       ds_list_add(global.QUESTS[? "default"], nq);
+      log("added quest!");
       if (global.QUEST_REFERENCE[? quest.id] == undefined) {
         global.QUEST_REFERENCE[? quest.id] = nq;
       }
@@ -686,7 +683,6 @@ function sc_mod_api_define_bee(bee, bee_sprite_image, bee_shiny_image, bee_hd_im
       var tiers = sc_tier_count();
       if (variable_struct_exists(bee, "tier")) {
         var tier = bee.tier;
-        log("bee tiers", tiers);
         if (tier == 1 && tiers.t1 >= 6) tier = 2;
         if (tier == 2 && tiers.t2 >= 12) tier = 3;
         if (tier == 3 && tiers.t3 >= 30) tier = 4;
@@ -806,7 +802,7 @@ function sc_mod_api_define_property(menu_id, prop_name, prop_val) {
 
 // api_define_menu_object()
 // define a new menu object
-function sc_mod_api_define_menu_object(obj, sprite_image, menu_image, scripts) {
+function sc_mod_api_define_menu_object(obj, sprite_image, menu_image, scripts, draw_script) {
 
   var mod_name = global.MOD_STATE_IDS[? lua_current];
   
@@ -837,7 +833,7 @@ function sc_mod_api_define_menu_object(obj, sprite_image, menu_image, scripts) {
     def[? "category"] = obj.category;
     def[? "tooltip"] = obj.tooltip;
 		def[? "cost"] = ds_map_create();
-		def[? "cost"][? "key"] = obj.shop_key;
+		if (obj.shop_key == true) def[? "cost"][? "key"] = obj.shop_key;
     def[? "cost"][? "buy"] = obj.shop_buy;
     def[? "cost"][? "sell"] = obj.shop_sell;
     def[? "menu"] = true;
@@ -890,6 +886,7 @@ function sc_mod_api_define_menu_object(obj, sprite_image, menu_image, scripts) {
       }
     }
     def[? "placeable"] = true;
+    if (variable_struct_exists(obj, "singular")) def[? "singular"] = obj.singular;
     if (def[? "placeable"] == true && variable_struct_exists(obj, "place_grass")) def[? "nature"] = obj.place_grass;
     if (def[? "placeable"] == true && variable_struct_exists(obj, "place_water")) def[? "aquatic"] = obj.place_water;
     if (def[? "placeable"] == true && variable_struct_exists(obj, "place_deep")) def[? "deep"] = obj.place_deep;
@@ -914,6 +911,7 @@ function sc_mod_api_define_menu_object(obj, sprite_image, menu_image, scripts) {
     
     // add custom draw script if any
     if (draw_script != undefined) {
+      log("defined mod menu has a draw script!");
       global.MOD_OBJ_STATES[? obj_id] = lua_current;
       global.MOD_OBJ_SCRIPTS[? obj_id] = draw_script;
     }  
