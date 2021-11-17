@@ -59,7 +59,7 @@ function sc_mod_api_slot_set(slot_id, item, amount, stats) {
   try {
     if (slot_id != undefined && instance_exists(slot_id)) {
       var data = sc_util_create_item_data(item, amount, stats == undefined ? {} : stats);
-      sc_slot_set(slot_id, data.item, data.total, data.durability, data.durability, data.stats);
+      sc_slot_set(slot_id, data.item, data.total, data.durability, data.durability, stats == undefined ? data.stats : stats);
       return "Success";
     }
   } catch(ex) {
@@ -240,3 +240,48 @@ function sc_mod_api_slot_set_modded(slot_id, modded) {
     return undefined;
   }
 }
+
+
+// api_slot_validate
+// checks a slot can take a given item w/ stats
+function sc_mod_api_slot_validate(slot_id, item, stats) {
+  var mod_name = global.MOD_STATE_IDS[? lua_current];
+  if (slot_id != undefined && instance_exists(slot_id)) {
+    return sc_slot_validate(slot_id, item, stats);
+  } else {
+    sc_mod_log(mod_name, "api_slot_validate", "Error: Slot Instance Doesn't Exist", undefined);
+    return false; 
+  }
+}
+
+
+// api_slot_item_id
+// gets a slot item as a : id, i.e. bee:common or frame1:filled or axe1 etc
+function sc_mod_api_slot_item_id(menu_id, slot_index) {
+  if (menu_id != undefined && instance_exists(menu_id) && variable_instance_exists(menu_id, "slots")) {
+    var slot = menu_id.slots[| slot_index-1];
+    var item = slot.item;
+    if (item == "bee" && slot.stats != undefined) item += ":" + slot.stats.species;
+    if (contains(item, "frame")) {
+      if (slot.stats.uncapped == true) {
+        item += ":uncapped";
+      } else if (slot.stats.filled == true) {
+        item += ":filled";
+      }
+    }
+    return item;
+  } else {
+    return undefined;
+  }  
+}
+
+
+// api_slot_draw
+// re-draws a specific slot
+function sc_mod_api_slot_redraw(slot_id) {
+  if (slot_id != undefined && instance_exists(slot_id)) {
+    sc_slot_draw(slot_id);
+  }
+} 
+
+
