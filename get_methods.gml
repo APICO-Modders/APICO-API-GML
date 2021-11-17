@@ -287,7 +287,8 @@ function sc_mod_api_get_objects(radius, oid, coordinate) {
 // get all nearby or working menu object instances
 function sc_mod_api_get_menu_objects(radius, oid, coordinate) {
   var data = [];
-  if (radius != undefined) {
+  try {
+  if (radius != undefined && coordinate != undefined) {
     var nearby = ds_list_create();
     var px = coordinate == undefined ? global.PLAYER.x : coordinate.x;
     var py = coordinate == undefined ? global.PLAYER.y+8 : coordinate.y;
@@ -301,7 +302,7 @@ function sc_mod_api_get_menu_objects(radius, oid, coordinate) {
           id: near.id,
           sprite_index: near.sprite_index,
           image_index: near.image_index,
-          menu_id: undefined,
+          menu_id: menu.id,
           oid: near.oid,
           x: near.x,
           y: near.y,
@@ -319,7 +320,7 @@ function sc_mod_api_get_menu_objects(radius, oid, coordinate) {
           id: self.id,
           sprite_index: self.sprite_index,
           image_index: self.image_index,
-          menu_id: undefined,
+          menu_id: menu.id,
           oid: self.oid,
           x: self.x,
           y: self.y,
@@ -329,6 +330,9 @@ function sc_mod_api_get_menu_objects(radius, oid, coordinate) {
     }
   }
   return data;
+  } catch(ex) {
+    return data;
+  }
 }
 
 
@@ -342,7 +346,7 @@ function sc_mod_api_get_slots(menu_id) {
       array_push(slots, {
         id: slot.id,
         index: slot.index+1,
-        item: slot.item,
+        item: slot.item + "",
         count: slot.count,
         current_health: slot.current_health,
         total_health: slot.total_health,
@@ -379,7 +383,6 @@ function sc_mod_api_get_slot_inst(slot_id) {
 // get a slot for a given menu and index
 function sc_mod_api_get_slot(menu_id, slot_index) {
   if (menu_id != undefined && instance_exists(menu_id) && variable_instance_exists(menu_id, "slots")) {
-    log(menu_id, menu_id.slots, menu_id.slots[| slot_index-1]);
     var slot = menu_id.slots[| slot_index-1];
     return {
       id: slot.id,
@@ -625,5 +628,19 @@ function sc_mod_api_get_inst_in_circle(instance_type, x1, y1, rad) {
     ds_list_destroy(insts);
     return arr;
     
+  }
+}
+
+
+// api_get_mouse_inst()
+// gets the mouse instance, which holds info on what item you're holding (if any)
+function sc_mod_api_get_mouse_inst() {
+  return {
+    id: global.MOUSE.id,
+    item: global.MOUSE.item,
+    count: global.MOUSE.count,
+    current_health: global.MOUSE.current_health,
+    total_health: global.MOUSE.total_health,
+    stats: global.MOUSE.stats
   }
 }
