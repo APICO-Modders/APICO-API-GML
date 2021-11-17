@@ -67,9 +67,6 @@ function sc_mod_api_create_object_pls(oid, ix, iy) {
         inst.menu.in_view = true;
       }
       if (contains(oid, "hive")) inst.hive_activated = true;
-      if (global.DICTIONARY[? oid][? "lighting"] != undefined) {
-        ds_list_add(global.LIGHTS, inst.id);
-      }
       return inst_id; // TODO why does this not work ffs
     } else {
       sc_mod_log(mod_name, "api_create_object", "Error: Object OID Not Defined", undefined);
