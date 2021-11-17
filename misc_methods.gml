@@ -91,6 +91,8 @@ function sc_mod_api_unlock_quest(quest_id) {
 	var progress = global.QUEST_PROGRESS[? quest_id];
 	if (progress == undefined) return undefined;
 	global.QUEST_PROGRESS[? quest_id].unlocked = true;
+  global.PLAYER.book1_ref.defined = false;
+  sc_book_define(global.PLAYER.book1_ref, 0, true);
 	return "Success";
 }
 
@@ -162,4 +164,26 @@ function sc_mod_api_library_add_book(book_name, book_script, book_sprite) {
       return undefined; 
     }
   }
+}
+
+
+// api_add_slot_to_menu()
+// lets you add the contents of a slot to a given menu
+// if there is room the slot is cleared, otherwise the remainder is left in the slot
+function sc_mod_api_add_slot_to_menu(slot_id, menu_id) {
+  var mod_name = global.MOD_STATE_IDS[? lua_current];
+  if (instance_exists(slot_id) && instance_exists(menu_id)) {
+    sc_menu_add(menu_id, slot_id);
+    return "Success";
+  } else {
+    sc_mod_log(mod_name, "api_add_slot_to_menu", "Error: Menu/Slot Instance Doesn't Exists", undefined);
+    return undefined;
+  }
+}
+
+// api_inst_exists()
+// lets you check if a instance exists
+// NB will return false if the instance is deactivated too!
+function sc_mod_api_inst_exists(inst_id) {
+  return instance_exists(inst_id);
 }
