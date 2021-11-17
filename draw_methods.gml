@@ -1,14 +1,14 @@
 // api_draw_sprite()
 // draws a given sprite at a certain position
 function sc_mod_api_draw_sprite(sprite_ref, frame, sx, sy) {
-  draw_sprite(sprite_ref, frame, sx, sy);
+  if (sprite_ref != undefined) draw_sprite(sprite_ref, frame, sx, sy);
 }
 
 
 // api_draw_sprite_part()
 // draws part of a given sprite at a certain position
 function sc_mod_api_draw_sprite_part(sprite_ref, frame, sl, st, sw, sh, sx, sy) {
-  draw_sprite_part(sprite_ref, frame, sl, st, sw, sh, sx, sy);  
+  if (sprite_ref != undefined) draw_sprite_part(sprite_ref, frame, sl, st, sw, sh, sx, sy);  
 }
 
 
@@ -16,7 +16,7 @@ function sc_mod_api_draw_sprite_part(sprite_ref, frame, sl, st, sw, sh, sx, sy) 
 // draws a sprite with transformations / color blend / alpha at a certain position
 function sc_mod_api_draw_sprite_ext(sprite_ref, frame, sx, sy, x_scale, y_scale, rot, col, alp) {
   var c = global.COLORS[? col] == undefined ? c_white : global.COLORS[? col];
-  draw_sprite_ext(sprite_ref, frame, sx, sy, x_scale, y_scale, rot, c, alp);
+  if (sprite_ref != undefined) draw_sprite_ext(sprite_ref, frame, sx, sy, x_scale, y_scale, rot, c, alp);
 }
 
 
@@ -91,25 +91,34 @@ function sc_mod_api_draw_tank(tank_gui) {
   var tank_type = menu_id.tank_type;
   
   // draw tank liquid amount
-  var tx = floor(tank_gui.x - global.CAMERA.x);
-  var ty = floor(tank_gui.y - global.CAMERA.y);
   var tw = tank_gui.sprite_width - 9;
   var th = tank_gui.sprite_height - 8;
   var progressC = (tank_amount / tank_max) * th;
   var offset = th - progressC;
   var c = sc_util_get_liquid_color(tank_type);
-  var ox = tx + 4;
-  var oy = ty + 4;
+  var ox = tank_gui.rx + 4;
+  var oy = tank_gui.ry + 4;
   draw_rectangle_color(ox, oy + offset, ox + tw, oy + th - 1, c, c, c, c, false);
   
   // liquid texture
   if (tank_type != "") {
-    draw_sprite(tank_gui.sprite_index, sc_util_get_liquid_texture(tank_type), tx, ty);
+    draw_sprite(tank_gui.sprite_index, sc_util_get_liquid_texture(tank_type), tank_gui.rx, tank_gui.ry);
   }
   
   // highlight
   if (global.HIGHLIGHTED_UI == tank_gui.id) {
-    draw_sprite(tank_gui.sprite_index, 0, tx, ty);
+    draw_sprite(tank_gui.sprite_index, 0, tank_gui.rx, tank_gui.ry);
   }
     
 }
+
+
+// api_draw_slots
+// re-draws all slots for a given menu
+function sc_mod_api_draw_slots(menu_id) {
+  if (menu_id != undefined && instance_exists(menu_id) && variable_instance_exists(menu_id, "slots")) {
+    for (var s = 0; s < ds_list_size(menu_id.slots); s++) {
+      sc_slot_draw(menu_id.slots[| s]); 
+    }
+  }
+} 
