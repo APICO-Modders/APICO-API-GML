@@ -178,7 +178,8 @@ function sc_mod_api_get_key_pressed(key_label) {
 // api_get_sprite()
 // get the sprite ref ID for a given oid
 function sc_mod_api_get_sprite(oid) {
-  return global.SPRITE_REFERENCE[? oid];
+  if (string_pos("sp_", oid) == 1) oid = string_replace(oid, "sp_", "");
+  return sc_util_sprite(oid);
 }
 
 
@@ -196,6 +197,8 @@ function sc_mod_api_get_data() {
   // run load
   global.MODS_LOAD_FILE[? mod_name] = buffer_load_async(global.BUFFER_REF[? mod_name], "mods/" + mod_name + "/data.json", 0, -1);
   
+  log(mod_name, global.BUFFER_REF[? mod_name], global.MODS_LOAD_FILE[? mod_name]);
+  
 }
 
 
@@ -203,15 +206,16 @@ function sc_mod_api_get_data() {
 // get a property from an instance
 function sc_mod_api_get_property(inst_id, prop_name) {
   var mod_name = global.MOD_STATE_IDS[? lua_current];
+  sc_mod_api_set_active(inst_id);
   if (inst_id != undefined && instance_exists(inst_id)) {
     if (variable_instance_exists(inst_id, prop_name)) {
       return variable_instance_get(inst_id, prop_name);
     } else {
-      sc_mod_log(mod_name, "api_get_property", "Error: Instance Property Doesn't Exist", undefined);
+      sc_mod_log(mod_name, "api_get_property", "Error: Instance Property Doesn't Exist (" + prop_name + ")", undefined);
       return undefined;  
     }
   } else {
-    sc_mod_log(mod_name, "api_get_property", "Error: Instance Doesn't Exist", undefined);
+    sc_mod_log(mod_name, "api_get_property", "Error: Instance Doesn't Exist (" + prop_name + ")", undefined);
     return undefined;
   }
 }
@@ -220,6 +224,7 @@ function sc_mod_api_get_property(inst_id, prop_name) {
 // api_get_inst()
 // get the main properties for a given inst
 function sc_mod_api_get_inst(inst_id) {
+  sc_mod_api_set_active(inst_id);
   if (inst_id != undefined && instance_exists(inst_id)) {
     return {
       id: inst_id.id,
@@ -339,6 +344,7 @@ function sc_mod_api_get_menu_objects(radius, oid, coordinate) {
 // api_get_slots()
 // gets all slots for a given menu
 function sc_mod_api_get_slots(menu_id) {
+  sc_mod_api_set_active(menu_id);
   if (menu_id != undefined && instance_exists(menu_id) && variable_instance_exists(menu_id, "slots")) {
     var slots = [];
     for (var s = 0; s < ds_list_size(menu_id.slots); s++) {
@@ -363,6 +369,7 @@ function sc_mod_api_get_slots(menu_id) {
 // api_get_slot_inst()
 // get a slots properties from just the slot inst id
 function sc_mod_api_get_slot_inst(slot_id) {
+  sc_mod_api_set_active(slot_id);
   if (slot_id != undefined && instance_exists(slot_id) && slot_id.object_index == ob_slot) {
     var slot = slot_id;
     return {
@@ -382,6 +389,7 @@ function sc_mod_api_get_slot_inst(slot_id) {
 // api_get_slot()
 // get a slot for a given menu and index
 function sc_mod_api_get_slot(menu_id, slot_index) {
+  sc_mod_api_set_active(menu_id);
   if (menu_id != undefined && instance_exists(menu_id) && variable_instance_exists(menu_id, "slots")) {
     var slot = menu_id.slots[| slot_index-1];
     return {
@@ -479,6 +487,7 @@ function sc_mod_api_get_flowers(radius) {
 // get the boundary for a given instance
 function sc_mod_api_get_boundary(inst_id) {
   var mod_name = global.MOD_STATE_IDS[? lua_current];
+  sc_mod_api_set_active(inst_id);
   try {
     if (instance_exists(inst_id)) {
       return {
@@ -509,6 +518,7 @@ function sc_mod_api_get_filename() {
 // gets the menu object for a given menu inst id
 function sc_mod_api_get_menus_obj(menu_id) {
   var mod_name = global.MOD_STATE_IDS[? lua_current];
+  sc_mod_api_set_active(menu_id);
   if (menu_id != undefined && instance_exists(menu_id) && menu_id.object_index == ob_menu) {
     return menu_id.obj;
   } else {
@@ -522,6 +532,7 @@ function sc_mod_api_get_menus_obj(menu_id) {
 // gets the menu for a given menu object inst id
 function sc_mod_api_get_objs_menu(obj_id) {
   var mod_name = global.MOD_STATE_IDS[? lua_current];
+  sc_mod_api_set_active(obj_id);
   if (obj_id != undefined && instance_exists(obj_id) && obj_id.object_index == ob_menu_object) {
     return obj_id.menu;
   } else {
