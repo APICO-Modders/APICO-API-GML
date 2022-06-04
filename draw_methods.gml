@@ -31,6 +31,17 @@ function sc_mod_api_draw_text(tx, ty, text, card, col, tw) {
 }
 
 
+// api_draw_number()
+// draws numbers at a given position using the slot number font
+function sc_mod_api_draw_number(tx, ty, amount, col) {
+	draw_set_halign(fa_right);
+  draw_set_valign(fa_bottom);
+	draw_set_font(global.FONT7_WHITE);
+	draw_set_color(global.COLORS[? col] == undefined ? global.COLORS[? "FONT_WHITE"] : global.COLORS[? col]);
+	draw_text(tx, ty, string(amount));	
+}
+
+
 // api_draw_line()
 // draws a line primitive between 2 points
 function sc_mod_api_draw_line(x1, y1, x2, y2, col, alpha) {
@@ -50,10 +61,10 @@ function sc_mod_api_draw_line(x1, y1, x2, y2, col, alpha) {
 function sc_mod_api_draw_rectangle(x1, y1, x2, y2, col, outline, alpha) {
   var c = global.COLORS[? col] == undefined ? c_white : global.COLORS[? col];
   if (alpha == undefined) { 
-    draw_rectangle_color(x1, y1, x2, y2, c, c, c, c, outline);
+    draw_rectangle_color(x1, y1, x2+global.PIXEL_OFFSET, y2+global.PIXEL_OFFSET, c, c, c, c, outline);
   } else {
     draw_set_alpha(alpha);
-    draw_rectangle_color(x1, y1, x2, y2, c, c, c, c, outline);
+    draw_rectangle_color(x1, y1, x2+global.PIXEL_OFFSET, y2+global.PIXEL_OFFSET, c, c, c, c, outline);
     draw_set_alpha(1);
   }
 }
@@ -76,7 +87,9 @@ function sc_mod_api_draw_circle(cx, cy, rad, col, outline, alpha) {
 // api_draw_button()
 // helper to draw a menu button, setting highlight + scale effect when clicked
 function sc_mod_api_draw_button(btn_id, show_text) {
-  sc_button_draw(btn_id, show_text);
+  if (btn_id != undefined && instance_exists(btn_id)) {
+    sc_button_draw(btn_id, show_text);
+  }
 }
 
 
