@@ -7,7 +7,7 @@ function sc_mod_api_define_item(item, sprite_image, special) {
   try {
     
     // check required keys in the item_def
-    var req = ["id", "name", "category", "tooltip", "shop_key", "shop_buy", "shop_sell"];
+    var req = ["id", "name", "category", "tooltip"];
     for (var r = 0; r < array_length(req); r++) {
       if (!variable_struct_exists(item, req[r])) {
         sc_mod_log(mod_name, "api_define_item", "Error: Missing Required Key (" + req[r] + ")", undefined);
@@ -35,9 +35,9 @@ function sc_mod_api_define_item(item, sprite_image, special) {
     def[? "category"] = item.category;
     def[? "tooltip"] = item.tooltip;
 		def[? "cost"] = ds_map_create();
-		if (item.shop_key == true) def[? "cost"][? "key"] = true;
-    def[? "cost"][? "buy"] = item.shop_buy;
-    def[? "cost"][? "sell"] = item.shop_sell;
+		if (variable_struct_exists(item, "shop_key") == true) def[? "cost"][? "key"] = item.shop_key;
+    def[? "cost"][? "buy"] = variable_struct_exists(item, "shop_buy") == true ? item.shop_buy : 0;
+    def[? "cost"][? "sell"] = variable_struct_exists(item, "shop_sell") == true ? item.shop_sell : 0;
     def[? "machines"] = ds_list_create();  
     if (variable_struct_exists(item, "machines")) {
       for (var a = 0; a < array_length(item.machines); a++) {
@@ -54,12 +54,21 @@ function sc_mod_api_define_item(item, sprite_image, special) {
     if (variable_struct_exists(item, "obj")) def[? "obj"] = item.obj;
     if (variable_struct_exists(item, "honeycore")) def[? "honeycore"] = item.honeycore;
     
+    if (variable_struct_exists(item, "bee_lore")) {
+      var lore = ds_list_create();
+      var text = ds_map_create();
+      text[? "color"] = "FONT_BOOK";
+      text[? "text"] = item.bee_lore;
+      ds_list_add(lore, text);
+      def[? "lore"] = lore;
+    }
+    
     // try loading sprite
     try {
       global.DICTIONARY[? item_id] = def;
       var spr = sprite_add(working_directory + "mods/" + mod_name + "/" + sprite_image, 4, true, false, 0, 0);
       if (spr == -1) {
-        sc_mod_log(mod_name, "api_define_item", "Error: Item Sprite Not Found", "");
+        sc_mod_log(mod_name, "api_define_item", "Error: Item Sprite Not Found (" + sprite_image + ")", "");
         return undefined;
       } else {
         var spr_name = "sp_" + item_id;
@@ -212,9 +221,9 @@ function sc_mod_api_define_object(obj, sprite_image, draw_script, special) {
   try {
     
     // check required fields
-    var req = ["id", "name", "category", "tooltip", "shop_key", "shop_buy", "shop_sell"];
+    var req = ["id", "name", "category", "tooltip"];
     for (var r = 0; r < array_length(req); r++) {
-      if (!variable_struct_exists(obj, req[r])) {
+      if (variable_struct_exists(obj, req[r]) == false) {
         sc_mod_log(mod_name, "api_define_object", "Error: Missing Required Key (" + req[r] + ")", undefined);
         return undefined;
       }
@@ -236,9 +245,9 @@ function sc_mod_api_define_object(obj, sprite_image, draw_script, special) {
     def[? "category"] = obj.category;
     def[? "tooltip"] = obj.tooltip;
 		def[? "cost"] = ds_map_create();
-		if (obj.shop_key == true) def[? "cost"][? "key"] = true;
-    def[? "cost"][? "buy"] = obj.shop_buy;
-    def[? "cost"][? "sell"] = obj.shop_sell;
+		if (variable_struct_exists(obj, "shop_key") == true) def[? "cost"][? "key"] = obj.shop_key;
+    def[? "cost"][? "buy"] = variable_struct_exists(obj, "shop_buy") == true ? obj.shop_buy : 0;
+    def[? "cost"][? "sell"] = variable_struct_exists(obj, "shop_sell") == true ? obj.shop_sell : 0;
     def[? "menu"] = false;
     def[? "machines"] = ds_list_create();  
     if (variable_struct_exists(obj, "machines")) {
@@ -268,11 +277,15 @@ function sc_mod_api_define_object(obj, sprite_image, draw_script, special) {
     if (variable_struct_exists(obj, "singular")) def[? "singular"] = obj.singular;
     if (variable_struct_exists(obj, "honeycore")) def[? "honeycore"] = obj.honeycore;
     if (variable_struct_exists(obj, "has_shadow")) def[? "shadow"] = obj.has_shadow;
+    if (variable_struct_exists(obj, "has_lighting")) def[? "lighting"] = obj.has_lighting;
     if (variable_struct_exists(obj, "pickable")) def[? "pickable"] = obj.pickable;
     if (variable_struct_exists(obj, "variants")) def[? "variants"] = obj.variants;
     if (variable_struct_exists(obj, "nature")) def[? "nature"] = obj.nature;
     if (variable_struct_exists(obj, "growth")) def[? "growth"] = obj.growth;
     if (variable_struct_exists(obj, "invisible")) def[? "invisible"] = obj.invisible;
+    if (variable_struct_exists(obj, "bench")) def[? "is_bench"] = obj.bench;
+    if (variable_struct_exists(obj, "bed")) def[? "is_bed"] = obj.bed;
+    if (variable_struct_exists(obj, "depth")) def[? "depth"] = obj.depth;
     
     if (variable_struct_exists(obj, "item_sprite")) {
       var ispr = sprite_add(working_directory + "mods/" + mod_name + "/" + obj.item_sprite, 4, true, false, 0, 0);
@@ -302,7 +315,8 @@ function sc_mod_api_define_object(obj, sprite_image, draw_script, special) {
       if (sprite_image == undefined && special == "seedling") {
         spr = sp_seedling; // all seedlings are the same sprite
       } else {
-        spr = sprite_add(working_directory + "mods/" + mod_name + "/" + sprite_image, 4, true, false, 0, 0);
+        var obj_frames = variable_struct_exists(obj, "bed") && obj.bed == true ? 5 : 4;
+        spr = sprite_add(working_directory + "mods/" + mod_name + "/" + sprite_image, obj_frames, true, false, 0, 0);
       }
       
       // add sprite ref if loaded
@@ -395,11 +409,11 @@ function sc_mod_api_define_quest(quest, page1, page2) {
       
       // add to quests + quest ref 
       ds_list_add(global.QUESTS[? "default"], nq);
-      log("added quest!");
       if (global.QUEST_REFERENCE[? quest.id] == undefined) {
         global.QUEST_REFERENCE[? quest.id] = nq;
       }
 			global.MOD_CUSTOM_QUESTS = true;
+      ds_list_add(global.MOD_CUSTOM_QUEST_CHECK, nq);
 			return "Success";
       
     }
@@ -460,7 +474,7 @@ function sc_mod_api_define_flower(flower, flower_sprite_image, flower_variants_i
       item_def.obj = flower_id;
       if (flower.aquatic == true) item_def.place_water = flower.aquatic;
       if (variable_struct_exists(flower, "deep")) item_def.place_deep = flower.deep;
-      var obj_create = sc_mod_api_define_object(item_def, flower_sprite_image, "flower", undefined);
+      var obj_create = sc_mod_api_define_object(item_def, flower_sprite_image, undefined, "flower");
       
       // define a seed item
       var seed_def = {};
@@ -497,11 +511,14 @@ function sc_mod_api_define_flower(flower, flower_sprite_image, flower_variants_i
       seedling_def.machines = [];
       seedling_def.drops = ["seed" + flower.id + " 1"];
       seedling_def.placeable = false;
-      var seedling_create = sc_mod_api_define_object(seedling_def, undefined, "seedling", undefined);
+      var seedling_create = sc_mod_api_define_object(seedling_def, undefined, undefined, "seedling");
       
       // check all 3 worked first
       if (obj_create == undefined || seed_create == undefined || seedling_create == undefined) {
-        sc_mod_log(mod_name, "api_define_flower", "Error: Flower Item Creation Failed", undefined);
+        var e_type = "obj";
+        if (seed_create == undefined) e_type = "seed";
+        if (seedling_create == undefined) e_type = "seedling";
+        sc_mod_log(mod_name, "api_define_flower", "Error: Flower Item Creation Failed (" + e_type + ")", undefined);
         return undefined;
       } else {
         
@@ -565,7 +582,7 @@ function sc_mod_api_define_flower(flower, flower_sprite_image, flower_variants_i
           // add to flower list
 					global.MOD_CUSTOM_FLOWERS = true;
           global.FLOWERS[? flower.id] = nf;
-          global.COLORS[? string_upper(flower_id)] = make_color_rgb(flower_color[0], flower_color[1], flower_color[2]);
+          global.COLORS[? string_upper(flower_id)] = make_color_rgb(flower_color.r, flower_color.g, flower_color.b);
           ds_list_add(global.FLOWERS[? "_species"], flower.id);
           return "Success";
           
@@ -809,9 +826,9 @@ function sc_mod_api_define_menu_object(obj, sprite_image, menu_image, scripts, d
   try {
     
     // check reqs
-    var req = ["id", "name", "category", "tooltip", "shop_key", "shop_buy", "shop_sell", "layout", "info", "buttons"];
+    var req = ["id", "name", "category", "tooltip", "layout", "info", "buttons"];
     for (var r = 0; r < array_length(req); r++) {
-      if (!variable_struct_exists(obj, req[r])) {
+      if (variable_struct_exists(obj, req[r]) == false) {
         sc_mod_log(mod_name, "api_define_menu_object", "Error: Missing Required Key (" + req[r] + ")", undefined);
         return undefined;
       }
@@ -833,9 +850,9 @@ function sc_mod_api_define_menu_object(obj, sprite_image, menu_image, scripts, d
     def[? "category"] = obj.category;
     def[? "tooltip"] = obj.tooltip;
 		def[? "cost"] = ds_map_create();
-		if (obj.shop_key == true) def[? "cost"][? "key"] = obj.shop_key;
-    def[? "cost"][? "buy"] = obj.shop_buy;
-    def[? "cost"][? "sell"] = obj.shop_sell;
+		if (variable_struct_exists(obj, "shop_key") == true) def[? "cost"][? "key"] = obj.shop_key;
+    def[? "cost"][? "buy"] = variable_struct_exists(obj, "shop_buy") ? obj.shop_buy : 0;
+    def[? "cost"][? "sell"] = variable_struct_exists(obj, "shop_sell") ? obj.shop_sell : 0;
     def[? "menu"] = true;
     def[? "layout"] = ds_list_create();   // gotta love converting datatypes eh?
     if (variable_struct_exists(obj, "layout")) {
@@ -896,6 +913,7 @@ function sc_mod_api_define_menu_object(obj, sprite_image, menu_image, scripts, d
     if (variable_struct_exists(obj, "honeycore")) def[? "honeycore"] = obj.honeycore;
     if (variable_struct_exists(obj, "invisible")) def[? "invisible"] = obj.invisible;
     if (variable_struct_exists(obj, "center")) def[? "center"] = obj.center;
+    if (variable_struct_exists(obj, "depth")) def[? "depth"] = obj.depth;
     
     if (variable_struct_exists(obj, "item_sprite")) {
       var ispr = sprite_add(working_directory + "mods/" + mod_name + "/" + obj.item_sprite, 4, true, false, 0, 0);
@@ -911,7 +929,7 @@ function sc_mod_api_define_menu_object(obj, sprite_image, menu_image, scripts, d
     
     // add custom draw script if any
     if (draw_script != undefined) {
-      log("defined mod menu has a draw script!");
+      log("adding draw script?", obj_id);
       global.MOD_OBJ_STATES[? obj_id] = lua_current;
       global.MOD_OBJ_SCRIPTS[? obj_id] = draw_script;
     }  
@@ -1020,7 +1038,7 @@ function sc_mod_api_define_gui(menu_id, gui_key, gui_ox, gui_oy, gui_script, spr
     } else {
       
       // add sprite reference
-      var spr_name = mod_name + "_" + gui_key;
+      var spr_name = "sp_" + mod_name + "_" + gui_key;
       global.MOD_SPRITES[? spr_name] = spr;
       global.SPRITE_REFERENCE[? spr_name] = spr;
         
@@ -1230,6 +1248,9 @@ function sc_mod_api_define_command(name, run_script) {
       state: lua_current,
       script: run_script
     }
+    
+    log("defined", name, run_script);
+    
     return "Success";
   } else {
     sc_mod_log(mod_name, "api_define_command", "Error: Command With That Name Already Exists", undefined);
@@ -1489,8 +1510,21 @@ function sc_mod_api_define_npc(npc, standing_sprite, standing_sprite_h, walking_
         greeting: npc.greeting
       }
       
+      return "Success";
+      
     } else {
-      sc_mod_log(mod_name, "api_define_menu_npc", "Error: Failed To Load Sprite/s", undefined);
+      var failed_spr = "(";
+      if (spr1 == -1) failed_spr += "shop_menu, ";
+      if (spr2 == -1) failed_spr += "dialogue_menu, ";
+      if (spr3 == -1) failed_spr += "item, ";
+      if (spr4 == -1) failed_spr += "bust, ";
+      if (spr5 == -1) failed_spr += "standing, ";
+      if (spr6 == -1) failed_spr += "standing_h, ";
+      if (spr7 == -1) failed_spr += "walking, ";
+      if (spr8 == -1) failed_spr += "walking_h, ";
+      if (spr9 == -1) failed_spr += "head, ";
+      failed_spr += ")";
+      sc_mod_log(mod_name, "api_define_menu_npc", "Error: Failed To Load Sprite/s" + failed_spr, undefined);
       return undefined;
     }
     
@@ -1499,5 +1533,91 @@ function sc_mod_api_define_npc(npc, standing_sprite, standing_sprite_h, walking_
     return undefined;
   }
   
+  
+}
+
+
+
+// api_define_wall()
+// define a new wall type
+function sc_mod_api_define_wall(wall, wall_sprite) {
+  var mod_name = global.MOD_STATE_IDS[? lua_current];
+  
+  try {
+    
+    // required
+    var req = ["id", "name"];
+    for (var r = 0; r < array_length(req); r++) {
+      if (!variable_struct_exists(wall, req[r])) {
+        sc_mod_log(mod_name, "api_define_menu_wall", "Error: Missing Required Key (" + req[r] + ")", undefined);
+        return undefined;
+      }
+    }
+  
+    var wall_id = "wall" + string(wall.id);
+    if (global.DICTIONARY[? wall_id] != undefined) {
+      sc_mod_log(mod_name, "api_define_menu_wall", "Error: Wall ID Already Defined (" + wall_id + ")", undefined);
+      return undefined;
+    }
+    
+    var nw = ds_map_create();
+    nw[? "name"] = wall.name;
+    nw[? "category"] = global.DICTIONARY[? "wall1"][? "category"];
+    nw[? "tooltip"] = global.DICTIONARY[? "wall1"][? "tooltip"];
+    nw[? "tooltip_item"] = global.DICTIONARY[? "wall1"][? "tooltip_item"];
+    nw[? "menu"] = false;
+		nw[? "cost"] = ds_map_create();
+    nw[? "cost"][? "buy"] = variable_struct_exists(wall, "shop_buy") == true ? wall.shop_buy : 0;
+    nw[? "cost"][? "sell"] = variable_struct_exists(wall, "shop_sell") == true ? wall.shop_sell : 0;
+    nw[? "tools"] = ds_list_create();
+    ds_list_add(nw[? "tools"], "hammer1");
+    nw[? "machines"] = ds_list_create();
+    nw[? "placeable"] = true;
+    nw[? "wall"] = wall_id;
+    
+    var spr = sprite_add(working_directory + "mods/" + mod_name + "/" + wall_sprite, 55, true, false, 0, 0);
+    if (spr == -1) {
+      sc_mod_log(mod_name, "api_define_menu_wall", "Error: Wall Sprite Not Found (" + wall_sprite + ")", undefined);
+      return undefined;
+    }
+    global.MOD_SPRITES[? "sp_" + wall_id] = spr;
+    global.SPRITE_REFERENCE[? "sp_" + wall_id] = spr;
+    
+    global.DICTIONARY[? wall_id] = nw;
+    
+    return "Success";
+    
+  } catch(ex) {
+   
+    sc_mod_log(mod_name, "api_define_wall", "Error: Failed To Define Wall", ex.longMessage);
+   
+  }
+  
+}
+
+
+
+function sc_mod_api_define_validation_icon(validation, item_sprite) {
+  
+  var mod_name = global.MOD_STATE_IDS[? lua_current];
+  
+  var spr = sprite_add(working_directory + "mods/" + mod_name + "/" + item_sprite, 1, true, false, 0, 0);
+  if (spr == -1) {
+    
+    sc_mod_log(mod_name, "api_define_validation_icon", "Error: Sprite Not Found (" + item_sprite + ")", undefined);
+    return undefined;
+    
+  } else {
+    
+    if (global.SPRITE_REFERENCE[? "sp_" + validation] == undefined) {
+      global.MOD_SPRITES[? "sp_" + validation] = spr;
+      global.SPRITE_REFERENCE[? "sp_" + validation] = spr;
+      return "Success";
+    } else {
+      sc_mod_log(mod_name, "api_define_validation_icon", "Error: Sprite Already Defined (" + validation + ")", undefined);
+      return undefined; 
+    }
+    
+  }
   
 }
