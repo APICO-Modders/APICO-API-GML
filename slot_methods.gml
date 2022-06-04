@@ -2,6 +2,7 @@
 // clear slot, setting item to "" count + health to 0 and resetting stats to empty
 function sc_mod_api_slot_clear(slot_id) {
   var mod_name = global.MOD_STATE_IDS[? lua_current];
+  sc_mod_api_set_active(slot_id);
   try {
     if (slot_id != undefined && instance_exists(slot_id)) {
       sc_slot_clear(slot_id);
@@ -18,6 +19,7 @@ function sc_mod_api_slot_clear(slot_id) {
 // add to slot amount, capped at 99
 function sc_mod_api_slot_incr(slot_id, amount) {
   var mod_name = global.MOD_STATE_IDS[? lua_current];
+  sc_mod_api_set_active(slot_id);
   try {
     if (slot_id != undefined && instance_exists(slot_id)) {
       if (amount == undefined) amount = 1;
@@ -36,6 +38,7 @@ function sc_mod_api_slot_incr(slot_id, amount) {
 // remove from slot amount, clearing if 0 is left
 function sc_mod_api_slot_decr(slot_id, amount) {
   var mod_name = global.MOD_STATE_IDS[? lua_current];
+  sc_mod_api_set_active(slot_id);
   try {
     if (slot_id != undefined && instance_exists(slot_id)) {
       if (amount == undefined) amount = 1;
@@ -56,6 +59,7 @@ function sc_mod_api_slot_decr(slot_id, amount) {
 // set a given slot with a given item
 function sc_mod_api_slot_set(slot_id, item, amount, stats) {
   var mod_name = global.MOD_STATE_IDS[? lua_current];
+  sc_mod_api_set_active(slot_id);
   try {
     if (slot_id != undefined && instance_exists(slot_id)) {
       var data = sc_util_create_item_data(item, amount, stats == undefined ? {} : stats);
@@ -72,6 +76,7 @@ function sc_mod_api_slot_set(slot_id, item, amount, stats) {
 // api_slot_match()
 // get the first slot with a match in the match list
 function sc_mod_api_slot_match(menu_id, match, first) {
+  sc_mod_api_set_active(menu_id);
   if (menu_id != undefined && instance_exists(menu_id) && variable_instance_exists(menu_id, "slots")) {
     var slots = [];
     
@@ -125,6 +130,7 @@ function sc_mod_api_slot_match(menu_id, match, first) {
 // api_slot_match_range()
 // get the first slot with a match from a range
 function sc_mod_api_slot_match_range(menu_id, match, range, first) {
+  sc_mod_api_set_active(menu_id);
   if (menu_id != undefined && instance_exists(menu_id) && variable_instance_exists(menu_id, "slots")) {
     var slots = [];
     
@@ -186,6 +192,7 @@ function sc_mod_api_slot_match_range(menu_id, match, range, first) {
 // automatically start a slot fill event
 function sc_mod_api_slot_fill(menu_id, slot_index) {
   var mod_name = global.MOD_STATE_IDS[? lua_current];
+  sc_mod_api_set_active(menu_id);
   if (menu_id != undefined && instance_exists(menu_id)) {
     menu_id.filling = true;
     menu_id.mod_fill = slot_index-1;
@@ -202,6 +209,7 @@ function sc_mod_api_slot_fill(menu_id, slot_index) {
 // automatically start a slot drain event
 function sc_mod_api_slot_drain(menu_id, slot_index) {
   var mod_name = global.MOD_STATE_IDS[? lua_current];
+  sc_mod_api_set_active(menu_id);
   if (menu_id != undefined && instance_exists(menu_id)) {
     menu_id.draining = true;
     menu_id.mod_drain = slot_index-1;
@@ -218,13 +226,14 @@ function sc_mod_api_slot_drain(menu_id, slot_index) {
 // set a slot to be inactive, making it unable to be highlighted or clicked
 function sc_mod_api_slot_set_inactive(slot_id, inactive) {
   var mod_name = global.MOD_STATE_IDS[? lua_current];
-  if (slot_id != undefined && instance_exists(slot_id)) {
-    slot_id.inactive = inactive;  
-    return "Success";
-  } else {
+  sc_mod_api_set_active(slot_id);
+	if (slot_id != undefined && instance_exists(slot_id)) {
+		slot_id.inactive = inactive;	
+		return "Success";
+	} else {
     sc_mod_log(mod_name, "api_slot_set_inactive", "Error: Slot Instance Doesn't Exist", undefined);
     return undefined;
-  }
+	}
 }
 
 
@@ -232,13 +241,14 @@ function sc_mod_api_slot_set_inactive(slot_id, inactive) {
 // set a slot to be modded, making it able to be highlighted but cant be clicked
 function sc_mod_api_slot_set_modded(slot_id, modded) {
   var mod_name = global.MOD_STATE_IDS[? lua_current];
-  if (slot_id != undefined && instance_exists(slot_id)) {
-    slot_id.modded = modded;
-    return "Success";
-  } else {
+  sc_mod_api_set_active(slot_id);
+	if (slot_id != undefined && instance_exists(slot_id)) {
+		slot_id.modded = modded;
+		return "Success";
+	} else {
     sc_mod_log(mod_name, "api_slot_set_modded", "Error: Slot Instance Doesn't Exist", undefined);
     return undefined;
-  }
+	}
 }
 
 
@@ -246,7 +256,8 @@ function sc_mod_api_slot_set_modded(slot_id, modded) {
 // checks a slot can take a given item w/ stats
 function sc_mod_api_slot_validate(slot_id, item, stats) {
   var mod_name = global.MOD_STATE_IDS[? lua_current];
-  if (slot_id != undefined && instance_exists(slot_id)) {
+  sc_mod_api_set_active(slot_id);
+	if (slot_id != undefined && instance_exists(slot_id)) {
     return sc_slot_validate(slot_id, item, stats);
   } else {
     sc_mod_log(mod_name, "api_slot_validate", "Error: Slot Instance Doesn't Exist", undefined);
@@ -258,6 +269,7 @@ function sc_mod_api_slot_validate(slot_id, item, stats) {
 // api_slot_item_id
 // gets a slot item as a : id, i.e. bee:common or frame1:filled or axe1 etc
 function sc_mod_api_slot_item_id(menu_id, slot_index) {
+  sc_mod_api_set_active(menu_id);
   if (menu_id != undefined && instance_exists(menu_id) && variable_instance_exists(menu_id, "slots")) {
     var slot = menu_id.slots[| slot_index-1];
     var item = slot.item;
@@ -279,9 +291,8 @@ function sc_mod_api_slot_item_id(menu_id, slot_index) {
 // api_slot_draw
 // re-draws a specific slot
 function sc_mod_api_slot_redraw(slot_id) {
+  sc_mod_api_set_active(slot_id);
   if (slot_id != undefined && instance_exists(slot_id)) {
     sc_slot_draw(slot_id);
   }
 } 
-
-
