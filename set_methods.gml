@@ -1,3 +1,15 @@
+// api_set_active()
+function sc_mod_api_set_active(inst_id) {
+  if (inst_id != undefined) { 
+    try { 
+      instance_activate_object(inst_id) 
+    } catch(ex) {
+      // nope
+    }; 
+  }
+}
+
+
 // api_set_devmode()
 // set devmod on or off
 function sc_mod_api_set_devmode(boo) {
@@ -10,7 +22,7 @@ function sc_mod_api_set_devmode(boo) {
 function sc_mod_api_set_player_position(px, py) {
   global.PLAYER.x = px;
   global.PLAYER.y = py;
-  sc_player_camera(global.PLAYER);
+	sc_player_camera(global.PLAYER);
   sc_player_move(); // update cam
   sc_player_move_update(); // update activation/deactivation
 }
@@ -73,7 +85,7 @@ function sc_mod_api_set_ground(tile_id, tx, ty) {
     
     // set tile map
     tilemap_set(global.WORLD_TILES, tile_index, gx, gy);
-    global.FILE_STORE_TEMP.world_tilemap[gy][gx] = tile_index;
+		global.FILE_STORE_TEMP.world_tilemap[gy][gx] = tile_index;
     
     // update surroundings
     sc_util_update_grounds(global.WORLD_TILES, gx, gy);
@@ -108,7 +120,7 @@ function sc_mod_api_set_floor(floor_id, tx, ty) {
     // update floor + surroundings
     tilemap_set(global.WORLD_FLOORING, tile_index, gx, gy);
     sc_util_update_tile(global.WORLD_FLOORING, gx, gy, true);
-    global.FILE_STORE_TEMP.floor_tilemap[gy][gx] = tile_index;
+		global.FILE_STORE_TEMP.floor_tilemap[gy][gx] = tile_index;
     
     // update map
     if (!surface_exists(global.MAP_TILES)) {
@@ -174,10 +186,10 @@ function sc_mod_api_set_data(json_data) {
     var check = json_stringify(json_data);
 
     // setup group
-    buffer_async_group_begin("mods");
+    var folder = os_type == os_ps4 || os_type == os_ps5 ? "apicomods" : "mods";
+    buffer_async_group_begin(folder);
     buffer_async_group_option("showdialog",0);
-    buffer_async_group_option("slottitle", "mods_file_" + mod_name);    
-    buffer_async_group_option("subtitle", "Mods File (" + mod_name + ")");
+    buffer_async_group_option("slottitle", "modsfile" + mod_name);
     
     // create buffer
     if (buffer_exists(global.BUFFER_REF[? mod_name])) buffer_delete(global.BUFFER_REF[? mod_name]);
@@ -185,8 +197,9 @@ function sc_mod_api_set_data(json_data) {
     buffer_write(global.BUFFER_REF[? mod_name], buffer_string, check);
       
     // setup mod folder settings
-    log("[co_core] Saving file to '" + mod_name + "/data.json'");
-    buffer_save_async(global.BUFFER_REF[? mod_name], mod_name + "/data.json", 0, buffer_get_size(global.BUFFER_REF[? mod_name]));
+    var path = mod_name + "/data.json";
+    log("[co_core] Saving file to: ", folder, path);
+    buffer_save_async(global.BUFFER_REF[? mod_name], path, 0, buffer_get_size(global.BUFFER_REF[? mod_name]));
     global.MODS_SAVE_FILE[? mod_name] = buffer_async_group_end();
     
     return "Success";
@@ -203,6 +216,7 @@ function sc_mod_api_set_data(json_data) {
 // set the position of a given obj
 function sc_mod_api_set_position(inst_id, ix, iy) {
   var mod_name = global.MOD_STATE_IDS[? lua_current];
+  sc_mod_api_set_active(inst_id);
   if (inst_id != undefined && instance_exists(inst_id)) {
     inst_id.x = ix;
     inst_id.y = iy;
@@ -218,6 +232,7 @@ function sc_mod_api_set_position(inst_id, ix, iy) {
 // set a property on a given instance
 function sc_mod_api_set_property(inst_id, prop_name, prop_value) {
   var mod_name = global.MOD_STATE_IDS[? lua_current];
+  sc_mod_api_set_active(inst_id);
   if (inst_id != undefined && instance_exists(inst_id)) {
     if (variable_instance_exists(inst_id, prop_name)) {
       try {
@@ -242,6 +257,7 @@ function sc_mod_api_set_property(inst_id, prop_name, prop_value) {
 // set a menu object as being immortal
 function sc_mod_api_set_immortal(inst_id, boo) {
   var mod_name = global.MOD_STATE_IDS[? lua_current];
+  sc_mod_api_set_active(inst_id);
   if (inst_id != undefined && instance_exists(inst_id)) {
     if (inst_id.object_index == ob_menu_object) {
       inst_id.immortal = boo;  
@@ -261,6 +277,7 @@ function sc_mod_api_set_immortal(inst_id, boo) {
 // set a menu position
 function sc_mod_api_set_menu_position(menu_id, mx, my) {
   var mod_name = global.MOD_STATE_IDS[? lua_current];
+  sc_mod_api_set_active(menu_id);
   if (menu_id != undefined && instance_exists(menu_id) && menu_id.object_index == ob_menu) {
     menu_id.x = mx;
     menu_id.y = my;
@@ -277,11 +294,11 @@ function sc_mod_api_set_menu_position(menu_id, mx, my) {
 // changes the tooltip for a given oid
 function sc_mod_api_set_tooltip(oid, tooltip) {
   var mod_name = global.MOD_STATE_IDS[? lua_current];
-  if (global.DICTIONARY[? oid] != undefined) {
-    global.DICTIONARY[? oid][? "tooltip"] = tooltip;  
-    return "Success";
-  } else {
+	if (global.DICTIONARY[? oid] != undefined) {
+		global.DICTIONARY[? oid][? "tooltip"] = tooltip;	
+		return "Success";
+	} else {
     sc_mod_log(mod_name, "api_set_tooltip", "Error: Definition For OID Doesn't Exist", undefined);
     return undefined;  
-  }
+	}
 }
