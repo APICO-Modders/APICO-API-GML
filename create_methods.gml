@@ -59,21 +59,26 @@ function sc_mod_api_create_object_pls(oid, ix, iy) {
   try {
     if (global.DICTIONARY[? oid] != undefined) {
       var def = global.DICTIONARY[? oid];
-      var inst = sc_object_create(ix, iy, ob_generic, oid); // sc_object_create changes the class if it needs
+      var inst = sc_object_create(ix, iy, ob_generic, oid, false); // sc_object_create changes the class if it needs
       var inst_id = real(inst.id) + 0;
       inst.in_view = true;
       if (inst.object_index == ob_menu_object) {
         inst.man_made = true;  
         inst.menu.in_view = true;
+        inst.menu.alarm[9] = room_speed * 0.1;
+        inst.menu.alarm[11] = room_speed * 1;
       }
-      if (contains(oid, "hive")) inst.hive_activated = true;
+      if (contains(oid, "hive")) {
+        inst.hive_activated = true;
+        inst.menu.hive_activated = true;
+      }
       return inst_id; // TODO why does this not work ffs
     } else {
-      sc_mod_log(mod_name, "api_create_object", "Error: Object OID Not Defined", undefined);
+      sc_mod_log(mod_name, "api_create_object", "Error: Object OID Not Defined (" + oid + ")", undefined);
       return undefined;
     }
   } catch(ex) {
-    sc_mod_log(mod_name, "api_create_object", "Error: Failed To Create Object", ex.longMessage);  
+    sc_mod_log(mod_name, "api_create_object", "Error: Failed To Create Object (" + oid + ")", ex.longMessage);  
     return undefined;
   }
 }
@@ -87,7 +92,7 @@ function sc_mod_api_create_timer(func, seconds, arg1, arg2, arg3) {
     var timer = instance_create_layer(0, 0, "Objects", ob_timer);
     timer.mod_name = mod_name;
     timer.state = global.MOD_STATES[? mod_name];
-    timer.method = func;
+    timer.func = func;
     timer.arg1 = arg1;
     timer.arg2 = arg2;
     timer.arg3 = arg3;
