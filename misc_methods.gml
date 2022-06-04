@@ -6,6 +6,13 @@ function sc_mod_api_choose(items) {
 }
 
 
+// api_is_game_paused()
+// is game paused y/n
+function sc_mod_api_is_game_paused() {
+  return global.PAUSED; 
+}
+
+
 // api_random_range()
 // choose a random number between a range
 function sc_mod_api_random_range(sn, en) {
@@ -20,10 +27,12 @@ function sc_mod_api_random(sn) {
 }
 
 
+
 // api_toggle_menu()
 // toggle a menu to be open or closed
 function sc_mod_api_toggle_menu(menu_id, toggle) {
   var mod_name = global.MOD_STATE_IDS[? lua_current];
+  sc_mod_api_set_active(menu_id);
   if (menu_id != undefined && instance_exists(menu_id) && menu_id.object_index == ob_menu) {
     sc_menu_object_toggle(menu_id.obj, toggle, true);
     return "Success";
@@ -38,6 +47,7 @@ function sc_mod_api_toggle_menu(menu_id, toggle) {
 // destroy a given inst
 function sc_mod_api_destroy_instance(inst_id) {
   var mod_name = global.MOD_STATE_IDS[? lua_current];
+  sc_mod_api_set_active(inst_id);
   if (inst_id != undefined) {
     if (inst_id == global.PLAYER) {
       sc_mod_log(mod_name, "api_destroy_inst", "Error: Why Would You Even Try That? :(", undefined);  
@@ -110,6 +120,7 @@ function sc_mod_api_blacklist_input(menu_oid) {
 // lets you delete a gui you defined with api_define_gui()
 function sc_mod_api_remove_gui(menu_id, gui_key) {
   var mod_name = global.MOD_STATE_IDS[? lua_current];
+  sc_mod_api_set_active(menu_id);
   if (menu_id != undefined && instance_exists(menu_id) && menu_id.object_index == ob_menu) {
     var existing = variable_instance_get(menu_id, gui_key); 
     if (existing != undefined && instance_exists(existing)) { 
@@ -144,7 +155,6 @@ function sc_mod_api_library_add_book(book_name, book_script, book_sprite) {
       var b = array_length(global.MOD_BOOK_LIST) + 3;
       var menu = global.PLAYER.menu_book;
 	    var oid = "book" + string(b+1);
-      log("adding", oid, b);
 		  var book = instance_create_layer(menu.x + 5 + (b*18), menu.y + 4, "Menus", ob_button);
 		  book.sprite_index = spr;
 		  book.ox = 5 + (b*18)
@@ -172,6 +182,8 @@ function sc_mod_api_library_add_book(book_name, book_script, book_sprite) {
 // if there is room the slot is cleared, otherwise the remainder is left in the slot
 function sc_mod_api_add_slot_to_menu(slot_id, menu_id) {
   var mod_name = global.MOD_STATE_IDS[? lua_current];
+  sc_mod_api_set_active(slot_id);
+  sc_mod_api_set_active(menu_id);
   if (instance_exists(slot_id) && instance_exists(menu_id)) {
     sc_menu_add(menu_id, slot_id);
     return "Success";
@@ -185,5 +197,44 @@ function sc_mod_api_add_slot_to_menu(slot_id, menu_id) {
 // lets you check if a instance exists
 // NB will return false if the instance is deactivated too!
 function sc_mod_api_inst_exists(inst_id) {
+  sc_mod_api_set_active(inst_id);
   return instance_exists(inst_id);
+}
+
+
+
+// api_http_request()
+// lets you send a http request
+function sc_mod_api_http_request(url, method_type, header_keys, body, callback) {
+  
+  var mod_name = global.MOD_STATE_IDS[? lua_current];
+  
+  try {
+  
+    var headers = ds_map_create();
+    var keys = variable_struct_get_names(header_keys);
+    for (var k = 0; k < array_length(keys); k++) {
+      ds_map_set(headers, keys[k], header_keys[$ keys[k]]); 
+    }
+    
+    var req = http_request(url, method_type, headers, body);
+    
+    global.MOD_HTTP_API[$ mod_name + "_" + callback] = {
+      id: req,
+      name: mod_name,
+      state: lua_current,
+      callback: callback
+    }
+    
+    ds_map_destroy(headers);
+    
+    sc_mod_log(mod_name, "api_http_request", "Sent Request (" + url + ")", undefined);
+    return "Success";
+  
+  } catch(ex) {
+    sc_mod_log(mod_name, "api_http_request", "Error: Failed To Send Request", ex.longMessage);
+    return undefined;
+  }
+  
+  
 }
