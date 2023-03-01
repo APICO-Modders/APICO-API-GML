@@ -49,8 +49,8 @@ function sc_mod_api_get_mouse_tile_position() {
 // get the current camera position / view offset
 function sc_mod_api_get_camera_position() {
   return {
-    x: floor(global.CAMERA.x),
-    y: floor(global.CAMERA.y)
+    x: floor(global.CAMERA.dx),
+    y: floor(global.CAMERA.dy)
   }
 }
 
@@ -58,15 +58,20 @@ function sc_mod_api_get_camera_position() {
 // api_get_highlighted()
 // gets the highlighted instance for the given type, if any
 function sc_mod_api_get_highlighted(instance_type) {
-  if (instance_type == "item") return global.HIGHLIGHTED_ITEM == "" ? undefined : global.HIGHLIGHTED_ITEM;
-  if (instance_type == "obj") return global.HIGHLIGHTED_OBJ == "" ? undefined : global.HIGHLIGHTED_OBJ;
-  if (instance_type == "menu_obj") return global.HIGHLIGHTED_OBJ == "" ? undefined : (global.HIGHLIGHTED_OBJ.object_index == ob_menu_object ? global.HIGHLIGHTED_OBJ : undefined);
-  if (instance_type == "menu") return global.HIGHLIGHTED_MENU == "" ? undefined : global.HIGHLIGHTED_MENU;
-  if (instance_type == "slot") return global.HIGHLIGHTED_SLOT == "" ? undefined : global.HIGHLIGHTED_SLOT;
-  if (instance_type == "ui") return global.HIGHLIGHTED_UI == "" ? undefined : global.HIGHLIGHTED_UI;
-  if (instance_type == "wall") return global.HIGHLIGHTED_WALL == "" ? undefined : global.HIGHLIGHTED_WALL;
-  if (instance_type == "carpet") return global.HIGHLIGHTED_CARPET == "" ? undefined : global.HIGHLIGHTED_CARPET;
-  if (instance_type == "ground") return global.HIGHLIGHTED_GROUND == "" ? undefined : global.HIGHLIGHTED_GROUND;
+  try {
+    if (instance_type == "item") return global.HIGHLIGHTED_ITEM == "" ? undefined : global.HIGHLIGHTED_ITEM;
+    if (instance_type == "obj") return global.HIGHLIGHTED_OBJ == "" ? undefined : global.HIGHLIGHTED_OBJ;
+    if (instance_type == "menu_obj") return global.HIGHLIGHTED_OBJ == "" ? undefined : (global.HIGHLIGHTED_OBJ.object_index == ob_menu_object ? global.HIGHLIGHTED_OBJ : undefined);
+    if (instance_type == "menu") return global.HIGHLIGHTED_MENU == "" ? undefined : global.HIGHLIGHTED_MENU;
+    if (instance_type == "slot") return global.HIGHLIGHTED_SLOT == "" ? undefined : global.HIGHLIGHTED_SLOT;
+    if (instance_type == "ui") return global.HIGHLIGHTED_UI == "" ? undefined : global.HIGHLIGHTED_UI;
+    if (instance_type == "wall") return global.HIGHLIGHTED_WALL == "" ? undefined : global.HIGHLIGHTED_WALL;
+    if (instance_type == "carpet") return global.HIGHLIGHTED_CARPET == "" ? undefined : global.HIGHLIGHTED_CARPET;
+    if (instance_type == "ground") return global.HIGHLIGHTED_GROUND == "" ? undefined : global.HIGHLIGHTED_GROUND;
+  } catch(ex) {
+    // log(ex)
+    return undefined; 
+  }
   return undefined;
 }
 
@@ -197,7 +202,7 @@ function sc_mod_api_get_data() {
   // run load
   global.MODS_LOAD_FILE[? mod_name] = buffer_load_async(global.BUFFER_REF[? mod_name], "mods/" + mod_name + "/data.json", 0, -1);
   
-  log(mod_name, global.BUFFER_REF[? mod_name], global.MODS_LOAD_FILE[? mod_name]);
+  log(mod_name, "Calling Load", global.MODS_LOAD_FILE[? mod_name]);
   
 }
 
@@ -293,7 +298,7 @@ function sc_mod_api_get_objects(radius, oid, coordinate) {
 function sc_mod_api_get_menu_objects(radius, oid, coordinate) {
   var data = [];
   try {
-  if (radius != undefined && coordinate != undefined) {
+  if (radius != undefined) {
     var nearby = ds_list_create();
     var px = coordinate == undefined ? global.PLAYER.x : coordinate.x;
     var py = coordinate == undefined ? global.PLAYER.y+8 : coordinate.y;
@@ -655,3 +660,56 @@ function sc_mod_api_get_mouse_inst() {
     stats: global.MOUSE.stats
   }
 }
+
+
+// api_get_language()
+// gets the current players language setting
+function sc_mod_api_get_language() {
+  return global.MODE_LAN;
+}
+
+
+// api_zoid_get_ref()
+// gets the unique xyoid of a given instance id
+function sc_mod_api_zoid_get_ref(inst) {
+	if (inst == undefined) return undefined;
+	try {
+		// zoid formats:
+	  // trees: TREE-x-y
+	  // items: ITEM-oid-x-y
+	  // walls: WALL-oid-x-y
+	  // objss: oid-x-y
+	  // mobjs: oid-x-y
+	  var zoid = "";
+		inst = (inst);
+    instance_activate_object(inst);
+	  var coords = string(floor(inst.x)) + "-" + string(floor(inst.y));
+	  if (inst.object_index == ob_tree) {
+	    zoid = "TREE-" + coords;
+		} else if (inst.object_index == ob_item) {
+	    zoid = "ITEM-" + inst.item + "-" + coords;
+	  } else if (inst.object_index == ob_wall) {
+	  	zoid = "WALL-" + inst.oid + "-" + coords;
+	  } else {
+	  	zoid = inst.oid + "-" + coords;
+	  }
+		return zoid;
+	} catch(ex) {
+		log("sc_mod_api_zoid_get_ref()", ex);
+	  return undefined;	
+	}
+}
+
+
+// api_zoid_get_inst()
+function sc_mod_api_zoid_get_inst(zoid) {
+	if (zoid == undefined) return undefined;
+  return global.WORLD_REF[$ zoid];
+}
+
+
+// api_get_progress()
+// get players current progress
+function sc_mod_api_get_progress() {
+	return global.PLAYER.progress_ref;
+}	
