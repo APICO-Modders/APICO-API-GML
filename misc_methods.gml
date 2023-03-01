@@ -27,6 +27,12 @@ function sc_mod_api_random(sn) {
 }
 
 
+// api_measure_text()
+// measures the size a piece of text will take up when drawn with api_draw_text()
+function sc_mod_api_measure_text(text, tw) {
+  return sc_measure_text(text, tw == undefined ? 0 : tw);
+}
+
 
 // api_toggle_menu()
 // toggle a menu to be open or closed
@@ -52,13 +58,13 @@ function sc_mod_api_destroy_instance(inst_id) {
     if (inst_id == global.PLAYER) {
       sc_mod_log(mod_name, "api_destroy_inst", "Error: Why Would You Even Try That? :(", undefined);  
       return undefined;
-    } else if (inst_id.oid == "scenery1") {
+    } else if (variable_instance_exists(inst_id, "oid") && inst_id.oid == "scenery1") {
       sc_mod_log(mod_name, "api_destroy_inst", "Error: Why Would You Do That To Poor Skipper? :(", undefined);  
       return undefined;
     } else {
-			if (global.HIGHLIGHTED_OBJ == inst_id) global.HIGHLIGHTED_OBJ = "";
-			if (global.HIGHLIGHTED_ITEM == inst_id) global.HIGHLIGHTED_ITEM = "";
-			if (global.HIGHLIGHTED_MENU == inst_id) global.HIGHLIGHTED_MENU = "";
+      if (global.HIGHLIGHTED_OBJ == inst_id) global.HIGHLIGHTED_OBJ = "";
+      if (global.HIGHLIGHTED_ITEM == inst_id) global.HIGHLIGHTED_ITEM = "";
+      if (global.HIGHLIGHTED_MENU == inst_id) global.HIGHLIGHTED_MENU = "";
       instance_destroy(inst_id);
       return "Success";
     }
@@ -79,31 +85,31 @@ function sc_mod_api_check_discovery(oid) {
 // api_play_sound()
 // plays a sound effect from the base game
 function sc_mod_api_play_sound(name) {
-	var vol = 0;
-	switch(name) {
-		case "break": vol = 0.2; break;
-		case "click": vol = 0.1; break;
-		case "confetti": vol = 0.2; break;
-		case "error": vol = 0.2; break;
-		case "jingle": vol = 0.3; break;
-		case "open": vol = 0.1; break;
-		case "plop": vol = 0.1; break;
-		case "pop": vol = 0.1; break;
-		case "rollover": vol = 0.1; break;
-	}
-	if (vol != 0) sc_play_sound(name, vol);
+  var vol = 0;
+  switch(name) {
+    case "break": vol = 0.2; break;
+    case "click": vol = 0.1; break;
+    case "confetti": vol = 0.2; break;
+    case "error": vol = 0.2; break;
+    case "jingle": vol = 0.3; break;
+    case "open": vol = 0.1; break;
+    case "plop": vol = 0.1; break;
+    case "pop": vol = 0.1; break;
+    case "rollover": vol = 0.1; break;
+  }
+  if (vol != 0) sc_play_sound(name, vol);
 }
 
 
 // api_unlock_quest()
 // unlocks a quest based on the quest id
 function sc_mod_api_unlock_quest(quest_id) {
-	var progress = global.QUEST_PROGRESS[? quest_id];
-	if (progress == undefined) return undefined;
-	global.QUEST_PROGRESS[? quest_id].unlocked = true;
+  var progress = global.QUEST_PROGRESS[? quest_id];
+  if (progress == undefined) return undefined;
+  global.QUEST_PROGRESS[? quest_id].unlocked = true;
   global.PLAYER.book1_ref.defined = false;
   sc_book_define(global.PLAYER.book1_ref, 0, true);
-	return "Success";
+  return "Success";
 }
 
 
@@ -154,16 +160,16 @@ function sc_mod_api_library_add_book(book_name, book_script, book_sprite) {
       // add book gui to library
       var b = array_length(global.MOD_BOOK_LIST) + 3;
       var menu = global.PLAYER.menu_book;
-	    var oid = "book" + string(b+1);
-		  var book = instance_create_layer(menu.x + 5 + (b*18), menu.y + 4, "Menus", ob_button);
-		  book.sprite_index = spr;
-		  book.ox = 5 + (b*18)
-		  book.oy = 4;
-		  book.type = "BookMod";
-		  book.text = book_name;
+      var oid = "book" + string(b+1);
+      var book = instance_create_layer(menu.x + 5 + (b*18), menu.y + 4, "Menus", ob_button);
+      book.sprite_index = spr;
+      book.ox = 5 + (b*18)
+      book.oy = 4;
+      book.type = "BookMod";
+      book.text = book_name;
       book.index = lua_current;
-		  book.menu = menu.id;
-		  variable_struct_set(menu.books, oid, book);
+      book.menu = menu.id;
+      variable_struct_set(menu.books, oid, book);
       
       // update library
       sc_library_update(menu);
@@ -186,6 +192,20 @@ function sc_mod_api_add_slot_to_menu(slot_id, menu_id) {
   sc_mod_api_set_active(menu_id);
   if (instance_exists(slot_id) && instance_exists(menu_id)) {
     sc_menu_add(menu_id, slot_id);
+    try {
+    if (menu_id.obj != "X" && menu_id.obj != -1) {
+      sc_menu_change(menu_id.obj);
+    }
+    } catch(ex) {
+      log("sc_mod_api_add_slot_to_menu A", ex);
+    }
+    try {
+    if (slot_id.menu != "" && slot_id.menu.obj != "X" && slot_id.menu.obj != -1) {
+      sc_menu_change(slot_id.menu.obj);  
+    }
+    } catch(ex) {
+      log("sc_mod_api_add_slot_to_menu B", ex);
+    }
     return "Success";
   } else {
     sc_mod_log(mod_name, "api_add_slot_to_menu", "Error: Menu/Slot Instance Doesn't Exists", undefined);
@@ -199,6 +219,13 @@ function sc_mod_api_add_slot_to_menu(slot_id, menu_id) {
 function sc_mod_api_inst_exists(inst_id) {
   sc_mod_api_set_active(inst_id);
   return instance_exists(inst_id);
+}
+
+
+// api_update_tooltip()
+// refreshes the tooltip cache
+function sc_mod_api_refresh_tooltip() {
+  sc_util_update_tooltip(); 
 }
 
 
@@ -237,4 +264,25 @@ function sc_mod_api_http_request(url, method_type, header_keys, body, callback) 
   }
   
   
+}
+
+
+
+// api_has_incense()
+// checks for an incense at a given position
+function sc_mod_api_has_incense(tx, ty, incense_oid) {
+  return sc_util_has_incense(tx, ty, incense_oid);  
+}
+
+
+
+// api_game_state()
+// gets current game state
+function sc_mod_api_game_state() {
+  return {
+    game_paused: global.PAUSED,
+    game_loading: global.LOADING,
+    game_saving: global.SAVING,
+    world_loading: global.WORLD_LOADING
+  }
 }
