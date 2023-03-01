@@ -293,6 +293,6 @@ function sc_mod_api_slot_item_id(menu_id, slot_index) {
 function sc_mod_api_slot_redraw(slot_id) {
   sc_mod_api_set_active(slot_id);
   if (slot_id != undefined && instance_exists(slot_id)) {
-    sc_slot_draw(slot_id);
+    sc_slot_draw(slot_id, false);
   }
 } 
