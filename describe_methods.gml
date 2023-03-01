@@ -64,6 +64,11 @@ function sc_mod_api_describe_bees(modded) {
   return json_parse(json_encode(global.MOD_BEES_BACKUP)); 
 }
 
+function sc_mod_api_describe_butterflies(modded) {
+  if (modded == true) return global.MODDED_BUTTERFLIES;
+  return json_parse(json_encode(global.MOD_BUTTERFLIES_BACKUP)); 
+}
+
 // api_describe_recipes()
 // return the workshop recipe list for either the base game or mods
 function sc_mod_api_describe_recipes(modded) {
