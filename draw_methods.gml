@@ -113,9 +113,28 @@ function sc_mod_api_draw_tank(tank_gui) {
   var oy = tank_gui.ry + 4;
   draw_rectangle_color(ox, oy + offset, ox + tw, oy + th - 1, c, c, c, c, false);
   
+  // TODO custom
   // liquid texture
   if (tank_type != "") {
-    draw_sprite(tank_gui.sprite_index, sc_util_get_liquid_texture(tank_type), tank_gui.rx, tank_gui.ry);
+    if (global.MOD_LIQUIDS[$ tank_type] != undefined) {
+      var tank_width = 8;
+      var tank_height = 14;
+      if (tank_gui.sprite_index == sp_gui_tank2) {
+        tank_width = 31;
+        tank_height = 34;
+      } else
+      if (tank_gui.sprite_index == sp_gui_tank3) {
+        tank_width = 8;
+        tank_height = 34;
+      } else
+      if (tank_gui.sprite_index == sp_gui_tank4) {
+        tank_width = 37;
+        tank_height = 34;
+      }
+      draw_sprite_part(global.MOD_LIQUIDS[$ tank_type].texture, 0, 0, 0, tank_width, tank_height, tank_gui.rx+4, tank_gui.ry+4);
+    } else {
+      draw_sprite(tank_gui.sprite_index, sc_util_get_liquid_texture(tank_type), tank_gui.rx, tank_gui.ry);
+    }
   }
   
   // highlight
@@ -131,7 +150,7 @@ function sc_mod_api_draw_tank(tank_gui) {
 function sc_mod_api_draw_slots(menu_id) {
   if (menu_id != undefined && instance_exists(menu_id) && variable_instance_exists(menu_id, "slots")) {
     for (var s = 0; s < ds_list_size(menu_id.slots); s++) {
-      sc_slot_draw(menu_id.slots[| s]); 
+      sc_slot_draw(menu_id.slots[| s], false); 
     }
   }
 } 
